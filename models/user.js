@@ -30,7 +30,6 @@ module.exports.getUserById = function (id, callback) {
 
 module.exports.getUserByEmail = function (email, callback) {
      const query = { email: email }
-     // console.log(query);
      User.findOne(query, callback);
 }
 
@@ -44,7 +43,7 @@ module.exports.addAdministrator = function (administrator, callback) {
                          administrator.password = hash;
                          administrator.KYCVerified = true;
                          administrator.emailVerified = true;
-                         administrator.roles = [{ roleTitle: "admin" }, { roleTitle: "canVerifyKYC" }];
+                         administrator.roles = [{ roleTitle: "admin" }, { roleTitle: "canVerifyKYC" }, { roleTitle: "canChangeRoles" }];
                          administrator.save(callback);
                     });
                });

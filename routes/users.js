@@ -18,16 +18,11 @@ var stream = fs.createWriteStream("./logs/" + dateformat(new Date(), "yyyy-mm-dd
 
 function Log(message, actionBy) {
      stream.write(dateformat(new Date(), "yyyy-mm-dd HH:MM:ss.l - ") + actionBy + " - " + message + "\n");
-     // stream.end();
-     // console.log("-----" + new Date().toISOString() + action);
 }
 
 var storage = multer.diskStorage({
      destination: (req, file, cb) => {
           cb(null, 'uploads')
-     },
-     filename: (req, file, cb) => {
-          cb(null, file.fieldname + '-' + Date.now())
      }
 });
 var upload = multer({ storage: storage });
@@ -48,20 +43,25 @@ router.post('/register', (req, res, next) => {
                User.addUser(newUser, (err, user) => {
                     if (err) {
                          if (err.code == "11000") {
+                              Log("Method: RegisterUser, Error: Email registered before", newUser.email)
                               return res.json({ success: false, msg: 'Email registered before' });
                          } else {
+                              Log("Method: RegisterUser, Error: " + err, newUser.email)
                               return res.json({ success: false, msg: err });
                          }
                     } else {
                          var mailContent = "<a>http://localhost:3000/users/verifyemail?email=" + user.email + "&verificationToken=" + user.emailVerificationToken + "</a>"
                          Email.sendMail(user.email, 'Verification Email', mailContent, (error, info) => {
                               if (error) {
-                                   console.log(error);
+                                   Log("Method: RegisterUser, Error: " + err + " while Sending Email", user.email);
+                                   // console.log(error);
                               } else {
-                                   console.log('Verification Email sent: ' + info.response);
+                                   Log("Method: RegisterUser, Message: Verification Email sent", user.email);
+                                   // console.log('Verification Email sent: ' + info.response);
                               }
                          });
-                         return res.json({ success: true, msg: 'User registered ' });
+                         Log("Method: RegisterUser, Message: User registered successfuly", user.email);
+                         return res.json({ success: true, msg: 'User registered successfuly' });
                     }
                });
           }
@@ -76,9 +76,11 @@ router.post('/authenticate', (req, res, next) => {
      User.getUserByEmail(email, (err, user) => {
           if (err) throw err;
           if (!user) {
+               Log("Method: Authenticate, Error: User not found", email)
                return res.json({ success: false, msg: 'User not found' });
           }
           if (!user.emailVerified) {
+               Log("Method: Authenticate, Error: Email not verified", email)
                return res.json({ success: false, msg: 'Email not verified' });
           }
 
@@ -90,7 +92,8 @@ router.post('/authenticate', (req, res, next) => {
                     const token = jwt.sign(user.toJSON(), config.secret, {
                          expiresIn: 604800 // 1 week in sec
                     });
-                    res.json({
+                    Log("Method: Authenticate, Message: User authenticated successfuly", email)
+                    return res.json({
                          success: true,
                          token: 'JWT ' + token,
                          user: {
@@ -98,10 +101,16 @@ router.post('/authenticate', (req, res, next) => {
                               firstName: user.firstName,
                               lastName: user.lastName,
                               email: user.email,
-                              roles: user.roles
+                              roles: user.roles,
+                              walletAddress: user.walletAddress,
+                              telephone: user.telephone,
+                              address: user.address,
+                              passportImageAddress: user.passportImageAddress,
+                              KYCVerified: user.KYCVerified
                          }
                     })
                } else {
+                    Log("Method: Authenticate, Error: Wrong Password", email)
                     return res.json({ success: false, msg: 'Wrong Password' });
                }
           });
@@ -113,32 +122,24 @@ router.get('/profile', passport.authenticate('jwt', { session: false }), (req, r
      return res.json({ user: req.user });
 });
 
-// Admin
-router.get('/admin', passport.authenticate('jwt', { session: false }), (req, res, next) => {
-     if (req.user.username == "admin") {
-          return res.json({ user: req.user });
-
-     } else {
-          return res.sendStatus(401);
-     }
-
-});
-
-// Validate Email
+// Verify Email
 router.get('/verifyemail', (req, res, next) => {
      const verificationToken = req.query.verificationToken;
      const email = req.query.email;
      User.getUserByEmail(email, (err, user) => {
           if (err) throw err;
           if (!user) {
+               Log("Method: VerifyEmail, Error: User not found", email)
                return res.json({ success: false, msg: 'User not found' });
           }
           if (user.emailVerificationToken != verificationToken) {
+               Log("Method: VerifyEmail, Error: Wrong Token", email)
                return res.json({ success: false, msg: 'Wrong Token' });
           } else {
                user.emailVerified = true;
                user.save();
-               return res.json({ success: true, msg: 'Email Validated' });
+               Log("Method: VerifyEmail, Message: Email Verified successfuly", email)
+               return res.json({ success: true, msg: 'Email Verified successfuly' });
           }
      });
 });
@@ -152,6 +153,7 @@ router.post('/forgotpassword', (req, res, next) => {
      User.getUserByEmail(passwordToken.email, (err, user) => {
           if (err) throw err;
           if (!user) {
+               Log("Method: ForgotPassword, Error: User not found", passwordToken.email)
                return res.json({ success: false, msg: 'User not found' });
           }
 
@@ -162,9 +164,11 @@ router.post('/forgotpassword', (req, res, next) => {
                     var mailContent = "<a>http://localhost:3000/users/resetpassword?email=" + passwordToken.email + "&resetpasswordtoken=" + passwordToken.token + "</a>";
                     Email.sendMail(user.email, 'Reset Password', mailContent, (error, info) => {
                          if (error) {
-                              console.log(error);
+                              Log("Method: ForgotPassword, Error: " + err + " while Sending Email", user.email);
+                              // console.log(error);
                          } else {
-                              console.log('Reset Password sent: ' + info.response);
+                              Log("Method: ForgotPassword, Message: Reset Password Email Email sent", user.email);
+                              // console.log('Reset Password Email sent: ' + info.response);
                          }
                     });
 
@@ -176,29 +180,33 @@ router.post('/forgotpassword', (req, res, next) => {
 
 // Reset Password
 router.post('/resetpassword', (req, res, next) => {
-     const resetPassToken = req.body.resetpasswordtoken;
+     const resetPassToken = req.body.resetpasswordtoken; + user.email
      const email = req.body.email;
      const password = req.body.password;
 
      ForgottenPasswordToken.getTokenByToken(resetPassToken, (err, token) => {
           if (err) throw err;
           if (!token || token.email != email) {
+               Log("Method: PasswordReset, Error: Invalid Token", email)
                return res.json({ success: false, msg: 'Invalid Token' });
           } else {
                token.remove();
                if (token.expiration < Date.now()) {
+                    Log("Method: PasswordReset, Error: Expired Token", email)
                     return res.json({ success: false, msg: 'Expired Token' });
                } else {
                     User.getUserByEmail(email, (err, user) => {
                          if (err) throw err;
                          if (!user) {
+                              Log("Method: PasswordReset, Error: User not found", email)
                               return res.json({ success: false, msg: 'User not found' });
                          }
                          User.changePassword(user, password, (err, user) => {
                               if (err) {
                                    throw err;
                               }
-                              return res.json({ success: true, msg: 'Password reset' });
+                              Log("Method: PasswordReset, Message: Password reset successfuly", user.email)
+                              return res.json({ success: true, msg: 'Password reset successfuly' });
                          });
                     });
                }
@@ -215,11 +223,11 @@ router.post('/changepassword', passport.authenticate('jwt', { session: false }),
      User.getUserByEmail(email, (err, user) => {
           if (err) throw err;
           if (!user) {
-               Log("Methode: ChangePassword, Error: User Not Found", email)
+               Log("Method: ChangePassword, Error: User Not Found", email)
                return res.json({ success: false, msg: 'User not found' });
           }
           if (!user.emailVerified) {
-               Log("Methode: ChangePassword, Error: Email not verified", user.email)
+               Log("Method: ChangePassword, Error: Email not verified", user.email)
                return res.json({ success: false, msg: 'Email not verified' });
           }
 
@@ -232,11 +240,11 @@ router.post('/changepassword', passport.authenticate('jwt', { session: false }),
                          if (err) {
                               throw err;
                          }
-                         Log("Methode: ChangePassword, Message: Password changed successfuly", user.email)
+                         Log("Method: ChangePassword, Message: Password changed successfuly", user.email)
                          return res.json({ success: true, msg: 'Password changed successfuly' });
                     });
                } else {
-                    Log("Methode: ChangePassword, Error: Wrong Old Password", user.email)
+                    Log("Method: ChangePassword, Error: Wrong Old Password", user.email)
                     return res.json({ success: false, msg: 'Wrong Old Password' });
                }
           });
@@ -247,11 +255,10 @@ router.post('/changepassword', passport.authenticate('jwt', { session: false }),
 // Update KYC
 router.post('/updatekyc', passport.authenticate('jwt', { session: false }), upload.single('passportImage'), (req, res, next) => {
      const email = req.user.email;
-     // console.log(req.body);
      User.getUserByEmail(email, (err, user) => {
           if (err) throw err;
           if (!user) {
-               Log("Methode: UpdateKYC, Error: User Not Found", email)
+               Log("Method: UpdateKYC, Error: User Not Found", email)
                return res.json({ success: false, msg: 'User not found' });
           }
           user.firstName = req.body.firstName;
@@ -261,16 +268,17 @@ router.post('/updatekyc', passport.authenticate('jwt', { session: false }), uplo
           user.telephone = req.body.telephone;
           user.address = req.body.address;
           if (user.passportImageAddress) {
-               fs.unlink(user.passportImageAddress, (err) => {
+               console.log(uploadDir + "/" + user.passportImageAddress);
+               fs.unlink(uploadDir + "/" + user.passportImageAddress, (err) => {
                     if (err) throw err;
                });
           }
           if (req.file) {
-               user.passportImageAddress = uploadDir + "/" + req.file.filename;
+               user.passportImageAddress = req.file.filename;
           }
           user.KYCVerified = false;
           user.save();
-          Log("Methode: UpdateKYC, Message: User KYC Updated", user.email)
+          Log("Method: UpdateKYC, Message: User KYC Updated", user.email)
           return res.json({ success: true, msg: "User KYC Updated" });
      });
 
@@ -284,7 +292,7 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
      User.hasRole(roles, 'canVerifyKYC', (hasRole) => {
           if (!hasRole) {
                // console.log(hasRole);
-               Log("Methode: VerifyKYC, Eroor: User has not permission to verify KYC", user.email)
+               Log("Method: VerifyKYC, Error: User has not permission to verify KYC", user.email)
                return res.sendStatus(401);
           } else {
                const verifyFirstName = req.body.verifyFirstName;
@@ -295,11 +303,10 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
                const verifyPassportImage = req.body.verifyPassportImage;
                const verifyTelephone = req.body.verifyTelephone;
                const email = req.body.email;
-               // console.log(req);
                User.getUserByEmail(email, (err, user) => {
                     if (err) throw err;
                     if (!user) {
-                         Log("Methode: UpdateKYC, Error: User(" + email + ") Not Found", req.user.email)
+                         Log("Method: VerifyKYC, Error: User(" + email + ") Not Found", req.user.email)
                          return res.json({ success: false, msg: 'User not found' });
                     }
                     if (verifyFirstName && verifyLastName && verifyBirthDate && verifyWallet && verifyAddress && verifyPassportImage && verifyTelephone) {
@@ -310,39 +317,71 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
                          Email.sendMail(user.email, 'KYC Verifiation Successful', mailContent, (error, info) => {
                               if (error) {
                                    console.log(error);
+                                   Log("Method: VerifyKYC, Error: " + err + " while Sending Email to " + user.email, req.user.email);
                               } else {
-                                   console.log('KYC Verifiation Email sent: ' + info.response);
-                                   Log("Methode: UpdateKYC, Message: KYC verifiation successful Email sent to " + user.email, req.user.email);
+                                   Log("Method: VerifyKYC, Message: KYC verifiation successful Email sent to " + user.email, req.user.email);
                               }
                          });
-                         Log("Methode: UpdateKYC, Message: User(" + user.email + ") KYC verified", req.user.email);
+                         Log("Method: VerifyKYC, Message: User(" + user.email + ") KYC verified", req.user.email);
                          return res.json({ success: true, msg: 'User KYC verified' });
                     } else {
                          var mailContent = "Hi " + user.firstName + "<br>";
                          mailContent += "Your KYC not verified because: <ul>";
-                         if (!verifyFirstName){
+                         if (!verifyFirstName) {
                               mailContent += "<li>First Name Problem</li>";
                          }
                          mailContent += "</ul>";
 
                          Email.sendMail(user.email, 'KYC Verifiation Failed', mailContent, (error, info) => {
                               if (error) {
-                                   console.log(error);
+                                   // console.log(error);
+                                   Log("Method: VerifyKYC, Error: " + err + " while Sending Email to " + user.email, req.user.email);
+
                               } else {
-                                   console.log('KYC Verifiation failed Email sent: ' + info.response);
-                                   Log("Methode: UpdateKYC, Message: KYC verifiation failed Email sent to " + user.email, req.user.email);
+                                   // console.log('KYC Verifiation failed Email sent: ' + info.response);
+                                   Log("Method: VerifyKYC, Message: KYC verifiation failed Email sent to " + user.email, req.user.email);
                               }
                          });
-                         Log("Methode: UpdateKYC, Message: User(" + user.email + ") KYC not verified", req.user.email);
+                         Log("Method: VerifyKYC, Message: User(" + user.email + ") KYC not verified", req.user.email);
                          return res.json({ success: false, msg: 'User KYC not verified' });
                     }
-                    //res.json({ success: true, msg: "User KYC Updated" });
                });
 
           }
      });
+});
 
+// Change Roles
+router.post('/changeroles', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const adminRoles = req.user.roles;
+     //ToDo
+     User.hasRole(adminRoles, 'canVerifyKYC', (hasRole) => {
+          if (!hasRole) {
+               Log("Method: ChangeRoles, Error: User has not permission to change roles", req.user.email)
+               return res.sendStatus(401);
+          } else {
+               const newRoles = req.body.roles;
+               const email = req.body.email;
+               User.getUserByEmail(email, (err, user) => {
+                    if (err) throw err;
+                    if (!user) {
+                         Log("Method: ChangeRoles, Error: User(" + email + ") Not Found", req.user.email)
+                         return res.json({ success: false, msg: 'User not found' });
+                    }
 
+                    user.roles = newRoles;
+                    var roleStr = "";
+                    newRoles.forEach(function (role, index, array) {
+                         roleStr = roleStr + role.roleTitle + ",";
+                    });
+                    roleStr = roleStr.slice(0, -1);
+                    user.save();
+                    Log("Method: ChangeRoles, Message: Roles(" + roleStr + ") of User(" + email + ") changed successfuly", req.user.email)
+                    return res.json({ success: true, msg: 'Roles change Successfuly' });
+               });
+
+          }
+     });
 });
 
 module.exports = router;
