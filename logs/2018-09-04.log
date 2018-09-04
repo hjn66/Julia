@@ -1,0 +1,4 @@
+2018-09-04 16:49:54.160 - h.niloofar@gmail.com - Methode: ChangePassword, Error: Wrong Old Password
+2018-09-04 16:50:07.972 - h.niloofar@gmail.com - Methode: ChangePassword, Message: Password changed successfuly
+2018-09-04 17:05:16.145 - admin@admin.com - Methode: UpdateKYC, Message: User(h.niloofar@gmail.com) KYC not verified
+2018-09-04 17:05:18.327 - admin@admin.com - Methode: UpdateKYC, Message: KYC verifiation successful Email sent to h.niloofar@gmail.com
