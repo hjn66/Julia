@@ -3,13 +3,14 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const passport = require('passport');
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'), Schema = mongoose.Schema, autoIncrement = require('mongoose-auto-increment');
 const config = require('./config/database');
 const configAdmin = require('./config/admin');
 
 
 mongoose.connect(config.database, { useNewUrlParser: true });
 mongoose.set('useCreateIndex', true)
+autoIncrement.initialize(mongoose.connection);
 
 
 mongoose.connection.on('connected', () => {
@@ -22,6 +23,7 @@ mongoose.connection.on('error', console.error.bind(console, 'connection error:')
 const app = express();
 
 const users = require('./routes/users');
+const tickets = require('./routes/tickets');
 
 const port = 3000;
 
@@ -42,10 +44,7 @@ app.use(passport.session());
 require('./config/passport')(passport);
 
 app.use('/users', users);
-
-app.get('/', (req, res) => {
-     res.send('Invalid');
-});
+app.use('/tickets', tickets);
 
 const User = require('./models/user');
 let administrator = new User({

@@ -17,6 +17,7 @@
     "fs": "*",
     "jsonwebtoken": "*",
     "mongoose": "*",
+    "mongoose-auto-increment": "*",
     "multer": "*",
     "nodemailer": "*",
     "passport": "*",

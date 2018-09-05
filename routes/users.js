@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const bodyParser = require('body-parser');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const config = require('../config/database');
@@ -10,19 +9,17 @@ const fs = require('fs');
 const uploadDir = path.join(__dirname, '../uploads');
 const User = require('../models/user');
 const ForgottenPasswordToken = require('../models/forgotPassword');
-const dateformat = require('dateformat');
 const multer = require('multer');
-
-var stream = fs.createWriteStream("./logs/" + dateformat(new Date(), "yyyy-mm-dd") + ".log", { flags: 'a' });
-
-
-function Log(message, actionBy) {
-     stream.write(dateformat(new Date(), "yyyy-mm-dd HH:MM:ss.l - ") + actionBy + " - " + message + "\n");
-}
+const randToken = require('rand-token');
+const Log = require('../log');
 
 var storage = multer.diskStorage({
      destination: (req, file, cb) => {
-          cb(null, 'uploads')
+          cb(null, './uploads')
+     },
+     filename: function (req, file, cb) {
+          raw = randToken.generate(16)
+          cb(null, raw.toString('hex') + Date.now() + path.extname(file.originalname));
      }
 });
 var upload = multer({ storage: storage });
@@ -149,7 +146,6 @@ router.post('/forgotpassword', (req, res, next) => {
      let passwordToken = new ForgottenPasswordToken({
           email: req.body.email
      })
-     // console.log(req.body.email);
      User.getUserByEmail(passwordToken.email, (err, user) => {
           if (err) throw err;
           if (!user) {
@@ -219,7 +215,6 @@ router.post('/changepassword', passport.authenticate('jwt', { session: false }),
      const email = req.user.email;
      const oldPassword = req.body.oldPassword;
      const newPassword = req.body.newPassword;
-     // console.log(req.body);
      User.getUserByEmail(email, (err, user) => {
           if (err) throw err;
           if (!user) {
@@ -268,7 +263,6 @@ router.post('/updatekyc', passport.authenticate('jwt', { session: false }), uplo
           user.telephone = req.body.telephone;
           user.address = req.body.address;
           if (user.passportImageAddress) {
-               console.log(uploadDir + "/" + user.passportImageAddress);
                fs.unlink(uploadDir + "/" + user.passportImageAddress, (err) => {
                     if (err) throw err;
                });
@@ -287,11 +281,9 @@ router.post('/updatekyc', passport.authenticate('jwt', { session: false }), uplo
 // Verify KYC
 router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const roles = req.user.roles;
-     // console.log(req.body);
 
      User.hasRole(roles, 'canVerifyKYC', (hasRole) => {
           if (!hasRole) {
-               // console.log(hasRole);
                Log("Method: VerifyKYC, Error: User has not permission to verify KYC", user.email)
                return res.sendStatus(401);
           } else {
@@ -316,7 +308,7 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
                          mailContent += "Your KYC verified successfuly";
                          Email.sendMail(user.email, 'KYC Verifiation Successful', mailContent, (error, info) => {
                               if (error) {
-                                   console.log(error);
+                                   // console.log(error);
                                    Log("Method: VerifyKYC, Error: " + err + " while Sending Email to " + user.email, req.user.email);
                               } else {
                                    Log("Method: VerifyKYC, Message: KYC verifiation successful Email sent to " + user.email, req.user.email);
@@ -329,6 +321,24 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
                          mailContent += "Your KYC not verified because: <ul>";
                          if (!verifyFirstName) {
                               mailContent += "<li>First Name Problem</li>";
+                         }
+                         if (!verifyLastName) {
+                              mailContent += "<li>Last Name Problem</li>";
+                         }
+                         if (!verifyBirthDate) {
+                              mailContent += "<li>BirthDate Problem</li>";
+                         }
+                         if (!verifyWallet) {
+                              mailContent += "<li>Wallet Problem</li>";
+                         }
+                         if (!verifyAddress) {
+                              mailContent += "<li>Address Problem</li>";
+                         }
+                         if (!verifyPassportImage) {
+                              mailContent += "<li>PassportImage Problem</li>";
+                         }
+                         if (!verifyTelephone) {
+                              mailContent += "<li>Telephone Problem</li>";
                          }
                          mailContent += "</ul>";
 
@@ -354,8 +364,7 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
 // Change Roles
 router.post('/changeroles', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const adminRoles = req.user.roles;
-     //ToDo
-     User.hasRole(adminRoles, 'canVerifyKYC', (hasRole) => {
+     User.hasRole(adminRoles, 'canChangeRoles', (hasRole) => {
           if (!hasRole) {
                Log("Method: ChangeRoles, Error: User has not permission to change roles", req.user.email)
                return res.sendStatus(401);
@@ -380,6 +389,41 @@ router.post('/changeroles', passport.authenticate('jwt', { session: false }), (r
                     return res.json({ success: true, msg: 'Roles change Successfuly' });
                });
 
+          }
+     });
+});
+
+// Change Roles
+router.get('/getreferal', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const userId = req.user._id;
+     User.getUserReferals(userId, (err, referals) => {
+          if (err) throw err;
+          var ReferedUsers = [];
+          referals.forEach(function (referal, index, array) {
+               ReferedUsers.push({ email: referal.email });
+          })
+          return res.json({ success: true, referals: ReferedUsers });
+     });
+});
+
+// Get Users List
+router.get('/list', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const roles = req.user.roles;
+
+     User.hasRole(roles, 'admin', (hasRole) => {
+          if (!hasRole) {
+               Log("Method: VerifyKYC, Error: User has not permission to get users list", user.email)
+               return res.sendStatus(401);
+          } else {
+               User.getUsersList((err, users) => {
+                    if (err) throw err;
+                    var usersList = [];
+                    users.forEach(function (user, index, array) {
+                         if (req.user.email != user.email)
+                              usersList.push({ email: user.email, firstName: user.firstName, lastName: user.lastName, roles: user.roles });
+                    })
+                    return res.json({ success: true, users: usersList });
+               });
           }
      });
 });

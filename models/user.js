@@ -112,3 +112,12 @@ module.exports.hasRole = function (roles, requestedRole, callback) {
      callback(isFound);
 }
 
+module.exports.getUserReferals = function (id, callback) {
+     const query = { referal: id }
+     User.find(query, callback);
+}
+
+module.exports.getUsersList = function (callback) {
+     const query = { }
+     User.find(query, callback);
+}
