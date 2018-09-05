@@ -393,7 +393,7 @@ router.post('/changeroles', passport.authenticate('jwt', { session: false }), (r
      });
 });
 
-// Change Roles
+// Get Referals
 router.get('/getreferal', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const userId = req.user._id;
      User.getUserReferals(userId, (err, referals) => {
@@ -402,6 +402,7 @@ router.get('/getreferal', passport.authenticate('jwt', { session: false }), (req
           referals.forEach(function (referal, index, array) {
                ReferedUsers.push({ email: referal.email });
           })
+          Log("Method: GetReferals, Message: Get Refeals successfuly", req.user.email)
           return res.json({ success: true, referals: ReferedUsers });
      });
 });
@@ -412,7 +413,7 @@ router.get('/list', passport.authenticate('jwt', { session: false }), (req, res,
 
      User.hasRole(roles, 'admin', (hasRole) => {
           if (!hasRole) {
-               Log("Method: VerifyKYC, Error: User has not permission to get users list", user.email)
+               Log("Method: GetUserList, Error: User has not permission to get users list", user.email)
                return res.sendStatus(401);
           } else {
                User.getUsersList((err, users) => {
@@ -422,6 +423,7 @@ router.get('/list', passport.authenticate('jwt', { session: false }), (req, res,
                          if (req.user.email != user.email)
                               usersList.push({ email: user.email, firstName: user.firstName, lastName: user.lastName, roles: user.roles });
                     })
+                    Log("Method: GetUserList, Message: Get users list successfuly", req.user.email)
                     return res.json({ success: true, users: usersList });
                });
           }
