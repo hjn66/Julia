@@ -8,3 +8,5 @@
 2018-09-06 15:28:44.132 - h.niloofar@gmail.com - Method: RegisterUser, Message: User registered successfuly
 2018-09-06 15:28:46.258 - h.niloofar@gmail.com - Method: RegisterUser, Message: Verification Email sent
 2018-09-06 15:42:04.081 - h.niloofar@gmail.com - Method: RegisterUser, Error: Email registered before
+2018-09-06 15:42:54.580 - h.niloofar@gmail.com - Method: RegisterUser, Error: Email registered before
+2018-09-06 15:44:15.313 - h.niloofar@gmail.com - Method: RegisterUser, Error: Email registered before
