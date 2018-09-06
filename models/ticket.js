@@ -29,3 +29,9 @@ const Ticket = module.exports = mongoose.model('Ticket', TicketSchema);
 module.exports.addTicket = function (newTicket, callback) {
      newTicket.save(callback);
 }
+
+// Get ticket by ticketNumber
+module.exports.getTicketByNumber = function (ticketNumber, callback) {
+     const query = { ticketNumber: ticketNumber }
+     Ticket.findOne(query, callback);
+}

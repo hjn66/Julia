@@ -369,25 +369,42 @@ router.post('/changeroles', passport.authenticate('jwt', { session: false }), (r
                Log("Method: ChangeRoles, Error: User has not permission to change roles", req.user.email)
                return res.sendStatus(401);
           } else {
-               const newRoles = req.body.roles;
+               // const newRoles = req.body.roles;
                const email = req.body.email;
-               User.getUserByEmail(email, (err, user) => {
-                    if (err) throw err;
-                    if (!user) {
-                         Log("Method: ChangeRoles, Error: User(" + email + ") Not Found", req.user.email)
-                         return res.json({ success: false, msg: 'User not found' });
-                    }
-
-                    user.roles = newRoles;
-                    var roleStr = "";
-                    newRoles.forEach(function (role, index, array) {
-                         roleStr = roleStr + role.roleTitle + ",";
+               if (req.body.email == req.user.email) {
+                    Log("Method: ChangeRoles, Error: User can not change own role", req.user.email)
+                    return res.json({ success: false, msg: 'User can not change own role' });
+               } else {
+                    User.getUserByEmail(email, (err, user) => {
+                         if (err) throw err;
+                         if (!user) {
+                              Log("Method: ChangeRoles, Error: User(" + email + ") Not Found", req.user.email)
+                              return res.json({ success: false, msg: 'User not found' });
+                         }
+                         const newRoles = [];
+                         if (req.body.admin){
+                              newRoles.push({roleTitle: "admin"})
+                         }
+                         if (req.body.user){
+                              newRoles.push({roleTitle: "user"})
+                         }
+                         if (req.body.canVerifyKYC){
+                              newRoles.push({roleTitle: "canVerifyKYC"})
+                         }
+                         if (req.body.canChangeRoles){
+                              newRoles.push({roleTitle: "canChangeRoles"})
+                         }
+                         user.roles = newRoles;
+                         var roleStr = "";
+                         newRoles.forEach(function (role, index, array) {
+                              roleStr = roleStr + role.roleTitle + ",";
+                         });
+                         roleStr = roleStr.slice(0, -1);
+                         user.save();
+                         Log("Method: ChangeRoles, Message: Roles(" + roleStr + ") of User(" + email + ") changed successfuly", req.user.email)
+                         return res.json({ success: true, msg: 'Roles change Successfuly' });
                     });
-                    roleStr = roleStr.slice(0, -1);
-                    user.save();
-                    Log("Method: ChangeRoles, Message: Roles(" + roleStr + ") of User(" + email + ") changed successfuly", req.user.email)
-                    return res.json({ success: true, msg: 'Roles change Successfuly' });
-               });
+               }
 
           }
      });
