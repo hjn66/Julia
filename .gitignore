@@ -1,7 +1,3 @@
-# email Config
-/config/email.js
-# database Config
-/config/database.js
 # Logs
 logs
 **/*.log
