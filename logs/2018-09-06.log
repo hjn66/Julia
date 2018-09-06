@@ -7,3 +7,4 @@
 2018-09-06 13:30:24.148 - admin@admin.com - Method: ChangeRoles, Message: Roles(user) of User(h.niloofar@gmail.com) changed successfuly
 2018-09-06 15:28:44.132 - h.niloofar@gmail.com - Method: RegisterUser, Message: User registered successfuly
 2018-09-06 15:28:46.258 - h.niloofar@gmail.com - Method: RegisterUser, Message: Verification Email sent
+2018-09-06 15:42:04.081 - h.niloofar@gmail.com - Method: RegisterUser, Error: Email registered before
