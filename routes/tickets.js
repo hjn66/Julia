@@ -41,7 +41,6 @@ router.post('/create', passport.authenticate('jwt', { session: false }), upload.
 // Cancel own ticket
 router.post('/cancel', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const userId = req.user._id;
-     // console.log(req.body);
      const ticketNumber = req.body.ticketNumber;
 
      Ticket.getTicketByNumber(ticketNumber, (err, ticket) => {
@@ -59,6 +58,31 @@ router.post('/cancel', passport.authenticate('jwt', { session: false }), (req, r
                     if (err) return handleError(err);
                     Log("Method: CancelTicket, Message: Ticket Number(" + ticketNumber + ") Canceled Successfuly", req.user.email)
                     res.json({ success: true, msg: "Ticket Number(" + ticketNumber + ") Canceled Successfuly" });
+               })
+          }
+     });
+});
+
+// Resolve own ticket
+router.post('/resolve', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const userId = req.user._id;
+     const ticketNumber = req.body.ticketNumber;
+
+     Ticket.getTicketByNumber(ticketNumber, (err, ticket) => {
+          if (err) throw err;
+          if (!ticket) {
+               Log("Method: ResolveTicket, Error: Ticket not found", req.user.email)
+               return res.json({ success: false, msg: 'Ticket not found' });
+          }
+          if (ticket.userId != userId) {
+               Log("Method: ResolveTicket, Error: User can not resolve others' ticket", req.user.email)
+               res.json({ success: false, msg: "User can not resolve others' ticket" });
+          } else {
+               ticket.status = 'Closed';
+               ticket.save(function (err) {
+                    if (err) return handleError(err);
+                    Log("Method: ResolveTicket, Message: Ticket Number(" + ticketNumber + ") Closed Successfuly", req.user.email)
+                    res.json({ success: true, msg: "Ticket Number(" + ticketNumber + ") Closed Successfuly" });
                })
           }
      });
