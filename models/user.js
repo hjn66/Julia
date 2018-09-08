@@ -105,9 +105,11 @@ module.exports.checkReferal = function (referal, callback) {
 
 module.exports.hasRole = function (roles, requestedRole, callback) {
      var isFound = false;
+     
      roles.forEach(function (role, index, array) {
-          if (role.roleTitle == requestedRole)
+          if (requestedRole.includes(role.roleTitle)){
                isFound = true;
+          }
      })
      callback(isFound);
 }

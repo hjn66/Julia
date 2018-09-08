@@ -47,7 +47,9 @@ router.post('/register', (req, res, next) => {
                               return res.json({ success: false, msg: err });
                          }
                     } else {
-                         var mailContent = "<a>http://localhost:3000/users/verifyemail?email=" + user.email + "&verificationToken=" + user.emailVerificationToken + "</a>"
+                         var mailContent = "Hi<br>";
+                         mailContent += "Your account registered suuccesfuly. To verify that this email address belongs to you, verify your email address. You can do this here:<br>"
+                         mailContent += '<a href="' + config.serverAddr + "/users/verifyemail?email=" + user.email + "&verificationToken=" + user.emailVerificationToken + '"Verifiy Email Address</a>'
                          Email.sendMail(user.email, 'Verification Email', mailContent, (error, info) => {
                               if (error) {
                                    Log("Method: RegisterUser, Error: " + err + " while Sending Email", user.email);
@@ -127,16 +129,22 @@ router.get('/verifyemail', (req, res, next) => {
           if (err) throw err;
           if (!user) {
                Log("Method: VerifyEmail, Error: User not found", email)
-               return res.json({ success: false, msg: 'User not found' });
+               // return res.json({ success: false, msg: 'User not found' });
+               return res.redirect('/login?msg="Email Not Found"');
+
           }
           if (user.emailVerificationToken != verificationToken) {
                Log("Method: VerifyEmail, Error: Wrong Token", email)
-               return res.json({ success: false, msg: 'Wrong Token' });
+               // return res.json({ success: false, msg: 'Wrong Token' });
+               return res.redirect('/login?msg="Email Not Verified, Wrong Token"');
+
           } else {
                user.emailVerified = true;
-               user.save();
-               Log("Method: VerifyEmail, Message: Email Verified successfuly", email)
-               return res.json({ success: true, msg: 'Email Verified successfuly' });
+               user.save(function (err) {
+                    if (err) return handleError(err);
+                    Log("Method: VerifyEmail, Message: Email Verified successfuly", email);
+                    return res.redirect('/login?msg="Email Verified successfuly"');
+               });
           }
      });
 });
@@ -157,7 +165,7 @@ router.post('/forgotpassword', (req, res, next) => {
                if (err) {
                     throw err;
                } else {
-                    var mailContent = "<a>http://localhost:3000/users/resetpassword?email=" + passwordToken.email + "&resetpasswordtoken=" + passwordToken.token + "</a>";
+                    var mailContent = '<a href="' + config.serverAddr + "users/resetpassword?email=" + passwordToken.email + "&resetpasswordtoken=" + passwordToken.token + '"Reset Password Link</a>';
                     Email.sendMail(user.email, 'Reset Password', mailContent, (error, info) => {
                          if (error) {
                               Log("Method: ForgotPassword, Error: " + err + " while Sending Email", user.email);
@@ -271,9 +279,11 @@ router.post('/updatekyc', passport.authenticate('jwt', { session: false }), uplo
                user.passportImageAddress = req.file.filename;
           }
           user.KYCVerified = false;
-          user.save();
-          Log("Method: UpdateKYC, Message: User KYC Updated", user.email)
-          return res.json({ success: true, msg: "User KYC Updated" });
+          user.save(function (err) {
+               if (err) return handleError(err);
+               Log("Method: UpdateKYC, Message: User KYC Updated", user.email)
+               return res.json({ success: true, msg: "User KYC Updated" });
+          })
      });
 
 });
@@ -282,7 +292,7 @@ router.post('/updatekyc', passport.authenticate('jwt', { session: false }), uplo
 router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const roles = req.user.roles;
 
-     User.hasRole(roles, 'canVerifyKYC', (hasRole) => {
+     User.hasRole(roles, ['admin','canVerifyKYC'], (hasRole) => {
           if (!hasRole) {
                Log("Method: VerifyKYC, Error: User has not permission to verify KYC", user.email)
                return res.sendStatus(401);
@@ -364,7 +374,7 @@ router.post('/verifykyc', passport.authenticate('jwt', { session: false }), (req
 // Change Roles
 router.post('/changeroles', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const adminRoles = req.user.roles;
-     User.hasRole(adminRoles, 'canChangeRoles', (hasRole) => {
+     User.hasRole(adminRoles, ['admin','canChangeRoles'], (hasRole) => {
           if (!hasRole) {
                Log("Method: ChangeRoles, Error: User has not permission to change roles", req.user.email)
                return res.sendStatus(401);
@@ -382,17 +392,17 @@ router.post('/changeroles', passport.authenticate('jwt', { session: false }), (r
                               return res.json({ success: false, msg: 'User not found' });
                          }
                          const newRoles = [];
-                         if (req.body.admin){
-                              newRoles.push({roleTitle: "admin"})
+                         // if (req.body.admin) {
+                         //      newRoles.push({ roleTitle: "admin" })
+                         // }
+                         if (req.body.user) {
+                              newRoles.push({ roleTitle: "user" })
                          }
-                         if (req.body.user){
-                              newRoles.push({roleTitle: "user"})
+                         if (req.body.canVerifyKYC) {
+                              newRoles.push({ roleTitle: "canVerifyKYC" })
                          }
-                         if (req.body.canVerifyKYC){
-                              newRoles.push({roleTitle: "canVerifyKYC"})
-                         }
-                         if (req.body.canChangeRoles){
-                              newRoles.push({roleTitle: "canChangeRoles"})
+                         if (req.body.canChangeRoles) {
+                              newRoles.push({ roleTitle: "canChangeRoles" })
                          }
                          user.roles = newRoles;
                          var roleStr = "";
@@ -424,13 +434,13 @@ router.get('/getreferal', passport.authenticate('jwt', { session: false }), (req
      });
 });
 
-// Get Users List
-router.get('/list', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+// Get Users List for Change roles
+router.get('/listroles', passport.authenticate('jwt', { session: false }), (req, res, next) => {
      const roles = req.user.roles;
 
-     User.hasRole(roles, 'admin', (hasRole) => {
+     User.hasRole(roles, ['admin','canChangeRoles'], (hasRole) => {
           if (!hasRole) {
-               Log("Method: GetUserList, Error: User has not permission to get users list", user.email)
+               Log("Method: GetUserListRoles, Error: User has not permission to get users list", user.email)
                return res.sendStatus(401);
           } else {
                User.getUsersList((err, users) => {
@@ -440,7 +450,34 @@ router.get('/list', passport.authenticate('jwt', { session: false }), (req, res,
                          if (req.user.email != user.email)
                               usersList.push({ email: user.email, firstName: user.firstName, lastName: user.lastName, roles: user.roles });
                     })
-                    Log("Method: GetUserList, Message: Get users list successfuly", req.user.email)
+                    Log("Method: GetUserListRoles, Message: Get users list successfuly", req.user.email)
+                    return res.json({ success: true, users: usersList });
+               });
+          }
+     });
+});
+
+// Get Users List for KYC
+router.get('/listkyc', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const roles = req.user.roles;
+
+     User.hasRole(roles, ['admin','canVerifyKYC'], (hasRole) => {
+          if (!hasRole) {
+               Log("Method: GetUserListKYC, Error: User has not permission to get users list", req.user.email)
+               return res.sendStatus(401);
+          } else {
+               User.getUsersList((err, users) => {
+                    if (err) throw err;
+                    var usersList = [];
+                    users.forEach(function (user, index, array) {
+                         if (req.user.email != user.email)
+                              usersList.push({
+                                   email: user.email, firstName: user.firstName, lastName: user.lastName, birthDate: user.birthDate,
+                                   address: user.address, walletAddress: user.walletAddress, telephone: user.telephone,
+                                   passportImageAddress: user.passportImageAddress, registeredDate: user.registeredDate
+                              });
+                    })
+                    Log("Method: GetUserListKYC, Message: Get users list successfuly", req.user.email)
                     return res.json({ success: true, users: usersList });
                });
           }
