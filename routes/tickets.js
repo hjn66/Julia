@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-const Ticket = require('../models/ticket');
 const randToken = require('rand-token');
 const multer = require('multer');
+
 const Log = require('../log');
+const Ticket = require('../models/ticket');
+const User = require('../models/user');
 
 
 var storage = multer.diskStorage({
@@ -33,7 +35,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), upload.
      }
      newTicket.save(function (err) {
           if (err) return handleError(err);
-          Log("Method: CreateTicket, Message: Ticket Number " + newTicket.ticketNumber + " Created", req.user.email)
+          Log("Method: CreateTicket, Info: Ticket Number " + newTicket.ticketNumber + " Created", req.user.email)
           res.json({ success: true, msg: 'Ticket Number ' + newTicket.ticketNumber + ' Created' });
      });
 });
@@ -56,7 +58,7 @@ router.post('/cancel', passport.authenticate('jwt', { session: false }), (req, r
                ticket.status = 'Canceled';
                ticket.save(function (err) {
                     if (err) return handleError(err);
-                    Log("Method: CancelTicket, Message: Ticket Number(" + ticketNumber + ") Canceled Successfuly", req.user.email)
+                    Log("Method: CancelTicket, Info: Ticket Number(" + ticketNumber + ") Canceled Successfuly", req.user.email)
                     res.json({ success: true, msg: "Ticket Number(" + ticketNumber + ") Canceled Successfuly" });
                })
           }
@@ -81,10 +83,143 @@ router.post('/resolve', passport.authenticate('jwt', { session: false }), (req, 
                ticket.status = 'Closed';
                ticket.save(function (err) {
                     if (err) return handleError(err);
-                    Log("Method: ResolveTicket, Message: Ticket Number(" + ticketNumber + ") Closed Successfuly", req.user.email)
+                    Log("Method: ResolveTicket, Info: Ticket Number(" + ticketNumber + ") Closed Successfuly", req.user.email)
                     res.json({ success: true, msg: "Ticket Number(" + ticketNumber + ") Closed Successfuly" });
                })
           }
+     });
+});
+
+// Replay own ticket
+router.post('/replay', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const userId = req.user._id;
+     const ticketNumber = req.body.ticketNumber;
+     const replayDesc = req.body.replayDesc;
+
+     Ticket.getTicketByNumber(ticketNumber, (err, ticket) => {
+          if (err) throw err;
+          if (!ticket) {
+               Log("Method: ReplayTicket, Error: Ticket not found", req.user.email)
+               return res.json({ success: false, msg: 'Ticket not found' });
+          }
+          if (ticket.userId != userId) {
+               Log("Method: ReplayTicket, Error: User can not replay others' ticket", req.user.email)
+               res.json({ success: false, msg: "User can not replay others' ticket" });
+          } else {
+               let replay = { userId: userId, description: replayDesc };
+               ticket.replays.push(replay);
+               ticket.lastReplayDate = new Date();
+               ticket.status = 'Open';
+               ticket.save(function (err) {
+                    if (err) return handleError(err);
+                    Log("Method: ReplayTicket, Info: Ticket Number(" + ticketNumber + ") Replayed Successfuly", req.user.email)
+                    res.json({ success: true, msg: "Ticket Number(" + ticketNumber + ") Replayed Successfuly" });
+               })
+          }
+     });
+});
+
+// Answer ticket by admin
+router.post('/answer', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const userId = req.user._id;
+     const roles = req.user.roles;
+     const ticketNumber = req.body.ticketNumber;
+     const answerDesc = req.body.answerDesc;
+
+     Ticket.getTicketByNumber(ticketNumber, (err, ticket) => {
+          if (err) throw err;
+          if (!ticket) {
+               Log("Method: AnswerTicket, Error: Ticket not found", req.user.email)
+               return res.json({ success: false, msg: 'Ticket not found' });
+          }
+          User.hasRole(roles, ['admin', 'canAnswerTicket'], (hasRole) => {
+               if (!hasRole) {
+                    Log("Method: AnswerTicket, Error: User has not permission to answer tickets", req.user.email)
+                    return res.sendStatus(401);
+               } else {
+                    let replay = { userId: userId, description: answerDesc };
+                    ticket.replays.push(replay);
+                    ticket.lastReplayDate = new Date();
+                    ticket.status = 'Answered';
+                    ticket.save(function (err) {
+                         var id = mongoose.Types.ObjectId;
+                         // if ticket.reciveEmail == true then send email to user and notify about answer ticket
+                         if (ticket.recieveEmail && id.isValid(ticket.userId)) {
+                              id = mongoose.Types.ObjectId(ticket.userId);
+                              User.getUserById(id, (err, user) => {
+                                   if (err) throw err;
+                                   var mailContent = "Hi " + user.firstName + "<br>";
+                                   mailContent += "Ticket number(" + ticket.ticketNumber + ") with subject " + ticket.subject;
+                                   mailContent += " answered by admin.<br>";
+                                   mailContent += "Admin's answer is: '" + answerDesc + "'";
+                                   Email.sendMail(user.email, 'Your ticket answered', mailContent, (error, info) => {
+                                        if (error) {
+                                             Log("Method: AnswerTicket, Error: " + err + " while Sending Email to " + user.email, req.user.email);
+                                        } else {
+                                             Log("Method: AnswerTicket, Info: Answer Ticket Email sent to " + user.email, req.user.email);
+                                        }
+                                   });
+                              })
+                         }
+                         if (err) return handleError(err);
+                         Log("Method: AnswerTicket, Info: Ticket Number(" + ticketNumber + ") Answered Successfuly", req.user.email)
+                         res.json({ success: true, msg: "Ticket Number(" + ticketNumber + ") Answered Successfuly" });
+                    })
+               }
+          });
+     });
+});
+
+// List All tickets , all Status By Admin
+router.get('/listall', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const roles = req.user.roles;
+     User.hasRole(roles, ['admin', 'canAnswerTicket'], (hasRole) => {
+          if (!hasRole) {
+               Log("Method: ListAllTicketByAdmin, Error: User has not permission to list all tickets", req.user.email)
+               return res.sendStatus(401);
+          } else {
+               Ticket.getAllTicket("", "", (err, tickets) => {
+                    Log("Method: ListAllTicketByAdmin, Info: Admin Gets All Tickets", req.user.email)
+                    return res.json({ success: true, tickets: tickets });
+               });
+          }
+     })
+});
+
+
+// List All Open tickets By Admin
+router.get('/listallopen', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const roles = req.user.roles;
+     User.hasRole(roles, ['admin', 'canAnswerTicket'], (hasRole) => {
+          if (!hasRole) {
+               Log("Method: ListAllOpenTicketByAdmin, Error: User has not permission to list all tickets", req.user.email)
+               return res.sendStatus(401);
+          } else {
+               Ticket.getAllTicket("", "Open", (err, tickets) => {
+                    Log("Method: ListAllOpenTicketByAdmin, Info: Admin Gets All Tickets", req.user.email)
+                    return res.json({ success: true, tickets: tickets });
+               });
+          }
+     })
+});
+
+// List All tickets , all Status By User
+router.get('/listmy', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const userId = req.user._id;
+
+     Ticket.getAllTicket(userId.toString(), "", (err, tickets) => {
+          Log("Method: ListAllTicketByUser, Info: User Gets All Own Tickets", req.user.email)
+          return res.json({ success: true, tickets: tickets });
+     });
+});
+
+// List Open tickets By User
+router.get('/listmy', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+     const userId = req.user._id;
+
+     Ticket.getAllTicket(userId.toString(), "Open", (err, tickets) => {
+          Log("Method: ListAllOpenTicketByUser, Info: User Gets Own Open Tickets", req.user.email)
+          return res.json({ success: true, tickets: tickets });
      });
 });
 

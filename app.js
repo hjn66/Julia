@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const passport = require('passport');
 const mongoose = require('mongoose'), Schema = mongoose.Schema, autoIncrement = require('mongoose-auto-increment');
-const config = require('./config/database');
+const config = require('./config/setting');
 const configAdmin = require('./config/admin');
 
 
@@ -59,6 +59,16 @@ User.addAdministrator(administrator, (err, user) => {
      // console.log(user);
 });
 
+// myFunc('1');
 app.listen(port, () => {
      console.log('Server started on ' + port);
 });
+
+function myFunc(arg) {
+     var date = new Date();
+     // date.setDate(date.getDate() + 1);
+     date -= (60 * 60 * 1000);
+     console.log(date, new Date(date), new Date());
+     setTimeout(myFunc, 1500, 'funky');
+   }
+   

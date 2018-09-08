@@ -10,11 +10,12 @@ const UserSchema = mongoose.Schema({
      emailVerificationToken: { type: String },
      password: { type: String, required: true },
      KYCVerified: { type: Boolean, default: false },
+     KYCUpdated: { type: Boolean, default: false },
      firstName: { type: String },
      lastName: { type: String },
      birthDate: { type: String },
      address: { type: String },
-     walletAddress: { type: String },
+     walletAddress: { type: String, lowercase: true },
      telephone: { type: String },
      passportImageAddress: { type: String },
      registeredDate: { type: Date, default: Date.now() },
@@ -105,9 +106,9 @@ module.exports.checkReferal = function (referal, callback) {
 
 module.exports.hasRole = function (roles, requestedRole, callback) {
      var isFound = false;
-     
+
      roles.forEach(function (role, index, array) {
-          if (requestedRole.includes(role.roleTitle)){
+          if (requestedRole.includes(role.roleTitle)) {
                isFound = true;
           }
      })
@@ -120,6 +121,11 @@ module.exports.getUserReferals = function (id, callback) {
 }
 
 module.exports.getUsersList = function (callback) {
-     const query = { }
+     const query = {}
+     User.find(query, callback);
+}
+
+module.exports.getUsersListKYC = function (callback) {
+     const query = { KYCUpdated: true, KYCVerified: false }
      User.find(query, callback);
 }

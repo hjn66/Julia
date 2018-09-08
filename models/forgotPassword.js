@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const config = require('../config/database');
+const config = require('../config/setting');
 const randToken = require('rand-token');
 
 
