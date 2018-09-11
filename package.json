@@ -15,6 +15,7 @@
     "express": "*",
     "formidable": "*",
     "fs": "*",
+    "http": "0.0.0",
     "jsonwebtoken": "*",
     "mongoose": "*",
     "mongoose-auto-increment": "*",
@@ -22,7 +23,8 @@
     "nodemailer": "*",
     "passport": "*",
     "passport-jwt": "*",
-    "rand-token": "*"
+    "rand-token": "*",
+    "request": "^2.88.0"
   },
   "author": "Hojjat Jashnniloofar",
   "license": "ISC"
