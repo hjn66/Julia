@@ -213,7 +213,7 @@ router.post(
           ticket.save(function(err) {
             // if ticket.reciveEmail == true then send email to user and notify about answer ticket
             if (ticket.recieveEmail) {
-              var mailContent = "Hi " + user.firstName + "<br>";
+              var mailContent = "Hi <br>";
               mailContent +=
                 "Ticket number(" +
                 ticket.ticketNumber +

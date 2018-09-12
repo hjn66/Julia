@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const config = require("../config/setting");
 autoIncrement = require("mongoose-auto-increment");
-const User = require("../models/user");
 
 // Ticket Schema
 const TicketSchema = mongoose.Schema({
@@ -58,43 +57,37 @@ function closeOldAnsweredTickets() {
   Ticket.find(query, function(err, tickets) {
     if (err) throw err;
     tickets.forEach(ticket => {
-      var id = mongoose.Types.ObjectId;
-      // if ticket.reciveEmail == true then send email to user and notify about closed ticket
-      if (ticket.recieveEmail && id.isValid(ticket.userId)) {
-        id = mongoose.Types.ObjectId(ticket.userId);
-        User.getUserById(id, (err, user) => {
-          if (err) throw err;
-          var mailContent = "Hi " + user.firstName + "<br>";
-          mailContent +=
-            "Ticket number(" +
-            ticket.ticketNumber +
-            ") with subject " +
-            ticket.subject;
-          mailContent +=
-            " closed authomatically because admin answered one weeks ago and you don't replay it.";
-          Email.sendMail(
-            user.email,
-            "Your ticket closed by system",
-            mailContent,
-            (error, info) => {
-              if (error) {
-                Log(
-                  "Method: CloseTicketAuthomaticaly, Error: " +
-                    err +
-                    " while Sending Email to " +
-                    user.email,
-                  "SYSTEM"
-                );
-              } else {
-                Log(
-                  "Method: CloseTicketAuthomaticaly, Info: Close Ticket Authomatically Email sent to " +
-                    user.email,
-                  "SYSTEM"
-                );
-              }
+      if (ticket.recieveEmail) {
+        var mailContent = "Hi <br>";
+        mailContent +=
+          "Ticket number(" +
+          ticket.ticketNumber +
+          ") with subject " +
+          ticket.subject;
+        mailContent +=
+          " closed authomatically because admin answered one weeks ago and you don't replay it.";
+        Email.sendMail(
+          ticket.userEmail,
+          "Your ticket closed by system",
+          mailContent,
+          (error, info) => {
+            if (error) {
+              Log(
+                "Method: CloseTicketAuthomaticaly, Error: " +
+                  err +
+                  " while Sending Email to " +
+                  ticket.userEmail,
+                "SYSTEM"
+              );
+            } else {
+              Log(
+                "Method: CloseTicketAuthomaticaly, Info: Close Ticket Authomatically Email sent to " +
+                  ticket.userEmail,
+                "SYSTEM"
+              );
             }
-          );
-        });
+          }
+        );
       }
       ticket.save();
       ticket.status = "Closed";
@@ -106,7 +99,7 @@ function closeOldAnsweredTickets() {
 }
 
 // Get All Tickets
-// if reqUserId == null then return all userId else retuen user's ticket
+// if reqUserEmail == null then return all userEmail else retuen user's ticket
 // if reqStatus == null return all status
 module.exports.getAllTicket = function(reqUserEmail, reqStatus, callback) {
   var query = {};
