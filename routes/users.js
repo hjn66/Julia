@@ -8,7 +8,6 @@ const uploadDir = path.join(__dirname, "../uploads");
 const multer = require("multer");
 const randToken = require("rand-token");
 const request = require("request");
-const http = require("http");
 
 const User = require("../models/user");
 const Log = require("../log");
@@ -440,38 +439,21 @@ router.post(
             );
             user.KYCUpdated = false;
             user.KYCVerified = true;
-            //   var options = {
-            //     host: "192.168.1.123",
-            //     path: "/api/rpc/add-to-whitelist",
-            //     method: "POST",
-            //     headers: {
-            //       "Content-Type": "application/json"
-            //     }
-            //   };
-            //   var req = http.request(options, function(res) {
-            //     var responseString = "";
+            var addr = config.RPCServer + "/api/rpc/add-to-whitelist";
+            console.log(addr);
 
-            //     res.on("data", function(data) {
-            //       responseString += data;
-            //       // save all the data from response
-            //     });
-            //     res.on("end", function() {
-            //       console.log(responseString);
-            //       // print to console when response ends
-            //     });
-            //   });
-            //   var reqBody = "sometext";
-            //   req.write(reqBody);
-            //   request.post(
-            //     "http://192.168.1.123:3000/api/rpc/add-to-whitelist",
-            //     { json: { user: user.walletAddress } },
-            //     function(error, response, body) {
-            //       console.log(response.statusCode);
-            //       if (!error && response.statusCode == 200) {
-            //         console.log(body);
-            //       }
-            //     }
-            //   );
+            request.post(addr, { json: { user: user.walletAddress } }, function(
+              error,
+              response,
+              body
+            ) {
+              console.log(body);
+
+              console.log(response.statusCode);
+              if (!error && response.statusCode == 200) {
+                console.log(body);
+              }
+            });
             //   request.post(
             //     config.RPCServer + "/api/rpc/add-to-whitelist",
             //     { json: { user: user.walletAddress } },
