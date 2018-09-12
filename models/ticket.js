@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const config = require("../config/setting");
 autoIncrement = require("mongoose-auto-increment");
+const Email = require("../config/email");
+const Log = require("../log");
 
 // Ticket Schema
 const TicketSchema = mongoose.Schema({

@@ -11,7 +11,7 @@ router.get("/pause", (req, res, next) => {
     Date: Date.now()
   });
   newPause.save(function(err) {
-    if (err) return handleError(err);
+    if (err) return res.json({ success: false, msg: "Error on save pause" });
     Log("Method: UnPause, Info: Application Paused", "");
     return res.json({ success: true, msg: "Application Paused" });
   });
@@ -23,7 +23,7 @@ router.get("/unpause", (req, res, next) => {
     Date: Date.now()
   });
   newPause.save(function(err) {
-    if (err) return handleError(err);
+    if (err) return res.json({ success: false, msg: "Error on save pause" });
     Log("Method: UnPause, Info: Application Unpaused", "");
     return res.json({ success: true, msg: "Application Unpaused" });
   });
@@ -36,7 +36,7 @@ router.post("/set-price", (req, res, next) => {
     Date: Date.now()
   });
   newPrice.save(function(err) {
-    if (err) return handleError(err);
+    if (err) return res.json({ success: false, msg: "Error on save pause" });
     Log("Method: SetPrice, Info: New Price Added", "");
     return res.json({ success: true, msg: "New Price Added" });
   });

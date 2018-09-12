@@ -184,7 +184,7 @@ router.get("/verifyemail", (req, res, next) => {
     } else {
       user.emailVerified = true;
       user.save(function(err) {
-        if (err) return handleError(err);
+        if (err) return res.redirect('/panel/#/login?msg="user can not save"');
         Log("Method: VerifyEmail, Info: Email Verified successfuly", email);
         return res.redirect('/panel/#/login?msg="Email Verified successfuly"');
       });
@@ -364,7 +364,7 @@ router.post(
       user.KYCUpdated = true;
       user.KYCVerified = false;
       user.save(function(err) {
-        if (err) return handleError(err);
+        if (err) return res.json({ success: true, msg: err });
         Log("Method: UpdateKYC, Info: User KYC Updated", user.email);
         return res.json({ success: true, msg: "User KYC Updated" });
       });
@@ -488,7 +488,8 @@ router.post(
             //     }
             //   );
             user.save(function(err) {
-              if (err) return handleError(err);
+              if (err)
+                return res.json({ success: false, msg: "User can not save" });
               Log(
                 "Method: VerifyKYC, Info: User(" +
                   user.email +
@@ -551,7 +552,11 @@ router.post(
             user.KYCVerified = false;
             user.KYCUpdated = false;
             user.save(function(err) {
-              if (err) return handleError(err);
+              if (err)
+                return res.json({
+                  success: false,
+                  msg: "User can not Updated"
+                });
               Log(
                 "Method: VerifyKYC, Info: User(" +
                   user.email +

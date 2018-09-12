@@ -7,6 +7,7 @@ const multer = require("multer");
 const Log = require("../log");
 const Ticket = require("../models/ticket");
 const User = require("../models/user");
+const Email = require("../config/email");
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -40,7 +41,11 @@ router.post(
       newTicket.attachmentAddress = req.file.filename;
     }
     newTicket.save(function(err) {
-      if (err) return handleError(err);
+      if (err)
+        return res.json({
+          success: false,
+          msg: "Error on save ticket"
+        });
       Log(
         "Method: CreateTicket, Info: Ticket Number " +
           newTicket.ticketNumber +
@@ -78,7 +83,11 @@ router.post(
       } else {
         ticket.status = "Canceled";
         ticket.save(function(err) {
-          if (err) return handleError(err);
+          if (err)
+            return res.json({
+              success: false,
+              msg: "Error on save ticket"
+            });
           Log(
             "Method: CancelTicket, Info: Ticket Number(" +
               ticketNumber +
@@ -121,7 +130,11 @@ router.post(
       } else {
         ticket.status = "Closed";
         ticket.save(function(err) {
-          if (err) return handleError(err);
+          if (err)
+            return res.json({
+              success: false,
+              msg: "Error on save ticket"
+            });
           Log(
             "Method: ResolveTicket, Info: Ticket Number(" +
               ticketNumber +
@@ -165,7 +178,11 @@ router.post(
         ticket.lastReplayDate = new Date();
         ticket.status = "Open";
         ticket.save(function(err) {
-          if (err) return handleError(err);
+          if (err)
+            return res.json({
+              success: false,
+              msg: "Error on save ticket"
+            });
           Log(
             "Method: ReplayTicket, Info: Ticket Number(" +
               ticketNumber +
@@ -244,7 +261,11 @@ router.post(
                 }
               );
             }
-            if (err) return handleError(err);
+            if (err)
+              return res.json({
+                success: false,
+                msg: "Error on save ticket"
+              });
             Log(
               "Method: AnswerTicket, Info: Ticket Number(" +
                 ticketNumber +
