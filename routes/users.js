@@ -67,7 +67,7 @@ router.post("/register", (req, res, next) => {
             user.email +
             "&verificationToken=" +
             user.emailVerificationToken +
-            '"Verifiy Email Address</a>';
+            '">Verifiy Email Address</a>';
           Email.sendMail(
             user.email,
             "Verification Email",
@@ -80,13 +80,11 @@ router.post("/register", (req, res, next) => {
                     " while Sending Email",
                   user.email
                 );
-                // console.log(error);
               } else {
                 Log(
                   "Method: RegisterUser, Info: Verification Email sent",
                   user.email
                 );
-                // console.log('Verification Email sent: ' + info.response);
               }
             }
           );
@@ -96,7 +94,8 @@ router.post("/register", (req, res, next) => {
           );
           return res.json({
             success: true,
-            msg: "User registered successfuly"
+            msg:
+              "Your account created successfuly, please verify your email via verification link sent to your meilbox"
           });
         }
       });
@@ -179,13 +178,15 @@ router.get("/verifyemail", (req, res, next) => {
     if (user.emailVerificationToken != verificationToken) {
       Log("Method: VerifyEmail, Error: Wrong Token", email);
       // return res.json({ success: false, msg: 'Wrong Token' });
-      return res.redirect('/login?msg="Email Not Verified, Wrong Token"');
+      return res.redirect(
+        '/panel/#/login?msg="Email Not Verified, Wrong Token"'
+      );
     } else {
       user.emailVerified = true;
       user.save(function(err) {
         if (err) return handleError(err);
         Log("Method: VerifyEmail, Info: Email Verified successfuly", email);
-        return res.redirect('/login?msg="Email Verified successfuly"');
+        return res.redirect('/panel/#/login?msg="Email Verified successfuly"');
       });
     }
   });

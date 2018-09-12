@@ -112,7 +112,7 @@ module.exports.getAllTicket = function(reqUserEmail, reqStatus, callback) {
   var query = {};
   console.log(reqStatus + "userId" + reqUserEmail);
 
-  if (reqUserId) {
+  if (reqUserEmail) {
     query["userEmail"] = reqUserEmail;
   }
   if (reqStatus) {
