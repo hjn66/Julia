@@ -10,6 +10,7 @@ const UserSchema = mongoose.Schema({
   password: { type: String, required: true },
   KYCVerified: { type: Boolean, default: false },
   KYCUpdated: { type: Boolean, default: false },
+  enabled: { type: Boolean },
   firstName: { type: String },
   lastName: { type: String },
   birthDate: { type: String },
@@ -53,8 +54,11 @@ module.exports.addAdministrator = function(administrator, callback) {
           administrator.emailVerified = true;
           administrator.roles = [
             { roleTitle: "admin" },
-            { roleTitle: "canVerifyKYC" },
-            { roleTitle: "canChangeRoles" }
+            { roleTitle: "verifyKYC" },
+            { roleTitle: "changeRoles" },
+            { roleTitle: "answerTickets" },
+            { roleTitle: "userManager" },
+            { roleTitle: "RPCManager" }
           ];
           administrator.save(callback);
         });
@@ -101,13 +105,17 @@ module.exports.checkReferal = function(referal, callback) {
       User.getUserById(id, (err, user) => {
         if (err) throw err;
         if (!user) {
-          callback("Referal Not found", false);
+          callback("Referal not found", false);
         } else {
-          callback(null, true);
+          if (!user.KYCVerified) {
+            callback("Referal KYC not verified yet", false);
+          } else {
+            callback(null, true);
+          }
         }
       });
     } else {
-      callback("Referal Not found", false);
+      callback("Referal not found", false);
     }
   } else {
     callback(null, true);

@@ -19,10 +19,7 @@ const ForgottenPasswordTokenSchema = mongoose.Schema({
   }
 });
 
-const ForgottenPasswordToken = (module.exports = mongoose.model(
-  "ForgottenPasswordToken",
-  ForgottenPasswordTokenSchema
-));
+const ForgottenPasswordToken = (module.exports = mongoose.model("ForgottenPasswordToken", ForgottenPasswordTokenSchema));
 
 module.exports.forgotPassword = function(forgotPasswordToken, callback) {
   var token = randToken.generate(16);
@@ -37,12 +34,9 @@ module.exports.getTokenByToken = function(givenToken, callback) {
 
 module.exports.getTokenByToken = function(givenToken, callback) {
   // delete expired token
-  ForgottenPasswordToken.deleteMany(
-    { expiration: { $lt: Date.now() } },
-    function(err) {
-      if (err) return null;
-    }
-  );
+  ForgottenPasswordToken.deleteMany({ expiration: { $lt: Date.now() } }, function(err) {
+    if (err) return null;
+  });
   const query = { token: givenToken };
   ForgottenPasswordToken.findOne(query, callback);
 };

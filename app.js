@@ -17,14 +17,11 @@ mongoose.set("useCreateIndex", true);
 autoIncrement.initialize(mongoose.connection);
 
 mongoose.connection.on("connected", () => {
-  console.log("Connetcted to DB");
+  console.log("Connetcted to DataBase");
 });
 
 // Database connection Error
-mongoose.connection.on(
-  "error",
-  console.error.bind(console, "connection error:")
-);
+mongoose.connection.on("error", console.error.bind(console, "connection error:"));
 
 const app = express();
 
@@ -64,10 +61,8 @@ let administrator = new User({
 
 User.addAdministrator(administrator, (err, user) => {
   if (err) throw err;
-  // console.log(user);
 });
 
-// myFunc('1');
 app.listen(port, () => {
   console.log("Server started on " + port);
 });

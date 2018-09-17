@@ -4,17 +4,17 @@
      <script>
           function myFunction() {
                $.get("/users/listTest?ticket=" + document.getElementById("ticket").value, function (data) {
-                    if (data.success){
-			alert("SUCCESS");
-			}
+                    if (data.success) {
+                         alert("SUCCESS");
+                    }
                });
-		setTimeout(myFunction, 1000);
+               setTimeout(myFunction, 1000);
           }
      </script>
      <form action="users/updatekyc" method="post" enctype="multipart/form-data">
           <label>email</label>
           <input type="text" name="email" value="h.niloofar@gmail.com"><br>
-		<input type="hidden" id="ticket" value="h.niloofar@gmail.com"><br>
+          <input type="hidden" id="ticket" value="h.niloofar@gmail.com"><br>
 
           <label>firstName</label>
           <input type="text" name="firstName" value="Hojjat"><br>

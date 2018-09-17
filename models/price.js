@@ -1,9 +1,39 @@
 const mongoose = require("mongoose");
 
-// Ticket Schema
+// Price Schema
 const PriceSchema = mongoose.Schema({
   price: { type: Number, required: true },
-  Date: { type: Date, default: Date.now() }
+  type: { type: String, enum: ["Ether", "Euro"] },
+  date: { type: Date, default: Date.now() }
 });
 
 const Price = (module.exports = mongoose.model("Price", PriceSchema));
+
+module.exports.getPrice = function(from, to, type, callback) {
+  var query = {};
+  query["type"] = type;
+  query["date"] = { $gte: "1900-01-01" };
+  if (from) {
+    query["date"]["$gte"] = from;
+  }
+  if (to) {
+    query["date"]["$lte"] = to;
+  }
+
+  // console.log(query);
+
+  Price.find(query)
+    .sort("date")
+    .exec(callback);
+};
+
+module.exports.getLastPrice = function(type, callback) {
+  var query = {};
+  query["type"] = type;
+
+  // console.log(query);
+
+  Price.findOne(query)
+    .sort("-date")
+    .exec(callback);
+};

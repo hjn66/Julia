@@ -61,39 +61,23 @@ function closeOldAnsweredTickets() {
     tickets.forEach(ticket => {
       if (ticket.recieveEmail) {
         var mailContent = "Hi <br>";
-        mailContent +=
-          "Ticket number(" +
-          ticket.ticketNumber +
-          ") with subject " +
-          ticket.subject;
-        mailContent +=
-          " closed authomatically because admin answered one weeks ago and you don't replay it.";
-        Email.sendMail(
-          ticket.userEmail,
-          "Your ticket closed by system",
-          mailContent,
-          (error, info) => {
-            if (error) {
-              Log(
-                "Method: CloseTicketAuthomaticaly, Error: " +
-                  err +
-                  " while Sending Email to " +
-                  ticket.userEmail,
-                "SYSTEM"
-              );
-            } else {
-              Log(
-                "Method: CloseTicketAuthomaticaly, Info: Close Ticket Authomatically Email sent to " +
-                  ticket.userEmail,
-                "SYSTEM"
-              );
-            }
+        mailContent += "Ticket number(" + ticket.ticketNumber + ") with subject " + ticket.subject;
+        mailContent += " closed authomatically because admin answered one weeks ago and you don't replay it.";
+        Email.sendMail(ticket.userEmail, "Your ticket closed by system", mailContent, (error, info) => {
+          if (error) {
+            Log("Method: CloseTicketAuthomaticaly, Error: " + err + " while Sending Email to " + ticket.userEmail, "SYSTEM");
+          } else {
+            Log("Method: CloseTicketAuthomaticaly, Info: Close Ticket Authomatically Email sent to " + ticket.userEmail, "SYSTEM");
           }
-        );
+        });
       }
-      ticket.save();
       ticket.status = "Closed";
-      console.log(ticket.ticketNumber + "Closed");
+      ticket.save(function(err) {
+        if (err) {
+          Log("Method: CloseTicketAuthomaticaly, Error: " + err.message, "SYSTEM");
+        }
+        Log("Method: CloseTicketAuthomaticaly, Info: Ticket number(" + ticket.ticketNumber + ") Closed", "SYSTEM");
+      });
     });
   });
   //Repeat Function every minute
@@ -105,7 +89,6 @@ function closeOldAnsweredTickets() {
 // if reqStatus == null return all status
 module.exports.getAllTicket = function(reqUserEmail, reqStatus, callback) {
   var query = {};
-  console.log(reqStatus + "userId" + reqUserEmail);
 
   if (reqUserEmail) {
     query["userEmail"] = reqUserEmail;
@@ -113,8 +96,6 @@ module.exports.getAllTicket = function(reqUserEmail, reqStatus, callback) {
   if (reqStatus) {
     query["status"] = reqStatus;
   }
-
-  console.log(query);
 
   // const query = { ticketNumber: ticketNumber }
   Ticket.find(query, callback);
