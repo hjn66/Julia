@@ -94,7 +94,7 @@ router.post("/get-price", (req, res, next) => {
 
   Price.getPrice(from, to, type, (err, prices) => {
     if (err) throw err;
-    Log("Method: GetPrice, Info: Get price list successfuly", "");
+    Log("Method: GetPrice, Info: Get price list", "");
     return res.json({ success: true, prices: prices });
   });
 });
@@ -102,10 +102,30 @@ router.post("/get-price", (req, res, next) => {
 router.post("/get-last-price", (req, res, next) => {
   type = req.body.type;
 
-  Price.getLastPrice(type, (err, prices) => {
+  Price.getLastPrice(type, (err, price) => {
     if (err) throw err;
-    Log("Method: GetPrice, Info: Get price list successfuly", "");
-    return res.json({ success: true, prices: prices });
+    Log("Method: GetLastPrice, Info: Get last price in " + type + "(" + price.price + ")", "");
+    return res.json({ success: true, price: price });
+  });
+});
+
+router.get("/get-last-price-ether", (req, res, next) => {
+  type = "Ether";
+
+  Price.getLastPrice(type, (err, price) => {
+    if (err) throw err;
+    Log("Method: GetLastPriceEther, Info: Get last price in Ether(" + price.price + ")", "");
+    return res.json({ success: true, price: price });
+  });
+});
+
+router.get("/get-last-price-euro", (req, res, next) => {
+  type = "Euro";
+
+  Price.getLastPrice(type, (err, price) => {
+    if (err) throw err;
+    Log("Method: GetLastPriceEther, Info: Get last price in Euro(" + price.price + ")", "");
+    return res.json({ success: true, price: price });
   });
 });
 

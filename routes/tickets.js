@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require("passport");
 const randToken = require("rand-token");
 const multer = require("multer");
+const path = require("path");
 
 const Log = require("../log");
 const Ticket = require("../models/ticket");
