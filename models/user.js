@@ -147,3 +147,10 @@ module.exports.getUsersListKYC = function(callback) {
   const query = { KYCUpdated: true, KYCVerified: false };
   User.find(query, callback);
 };
+
+module.exports.getUserKYC = function(email, callback) {
+  const query = { email: email };
+  console.log(query);
+
+  User.findOne(query, callback);
+};

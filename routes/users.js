@@ -652,9 +652,34 @@ router.get("/listkyc", passport.authenticate("jwt", { session: false }), (req, r
   });
 });
 
-// Get Users List for KYC
-router.get("/listTest", (req, res, next) => {
-  return res.json({ success: false, checkFirstName: true });
+// Get KYC informations of a user
+router.post("/get-kyc", passport.authenticate("jwt", { session: false }), (req, res, next) => {
+  const roles = req.user.roles;
+  const email = req.body.email;
+
+  User.hasRole(roles, ["admin", "verifyKYC"], hasRole => {
+    if (!hasRole) {
+      Log("Method: GetKYCInfo, Error: User has not permission to get users KYC info", req.user.email);
+      return res.sendStatus(401);
+    } else {
+      User.getUserKYC(email, (err, user) => {
+        if (err) throw err;
+        var retUser = {
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          birthDate: user.birthDate,
+          address: user.address,
+          walletAddress: user.walletAddress,
+          telephone: user.telephone,
+          passportImageAddress: user.passportImageAddress,
+          registeredDate: user.registeredDate
+        };
+        Log("Method: GetKYCInfo, Info: Get user KYC info successfuly", req.user.email);
+        return res.json({ success: true, user: retUser });
+      });
+    }
+  });
 });
 
 module.exports = router;
