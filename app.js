@@ -63,6 +63,11 @@ User.addAdministrator(administrator, (err, user) => {
   if (err) throw err;
 });
 
+const Price = require("./models/price");
+var dates = ["2018-09-01", "2018-09-02", "2018-09-04", "2018-09-05", "2018-09-08"];
+Price.addDefaultPrice(dates, "Ether");
+Price.addDefaultPrice(dates, "Euro");
+
 app.listen(port, () => {
   console.log("Server started on " + port);
 });

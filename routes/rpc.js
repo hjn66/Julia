@@ -100,10 +100,7 @@ router.post("/get-price", (req, res, next) => {
 });
 
 router.post("/get-last-price", (req, res, next) => {
-  from = req.body.from;
-  to = req.body.to;
   type = req.body.type;
-  // console.log(req.connection.remoteAddress);
 
   Price.getLastPrice(type, (err, prices) => {
     if (err) throw err;

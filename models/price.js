@@ -37,3 +37,14 @@ module.exports.getLastPrice = function(type, callback) {
     .sort("-date")
     .exec(callback);
 };
+
+module.exports.addDefaultPrice = function(dates, type) {
+  for (var i = 0; i < dates.length; i++) {
+    let price = new Price({
+      price: Math.random() * 200,
+      type: type,
+      date: new Date(dates[i])
+    });
+    price.save();
+  }
+};
