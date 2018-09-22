@@ -42,7 +42,6 @@ router.post("/register", (req, res, next) => {
       User.addUser(newUser, (err, user) => {
         if (err) {
           if (err.code == "11000") {
-            console.log(err.errmsg);
             Log("Method: RegisterUser, Error: " + err.errmsg, newUser.email);
             return res.json({ success: false, msg: "Email registered before" });
           } else {
@@ -664,19 +663,10 @@ router.post("/get-kyc", passport.authenticate("jwt", { session: false }), (req, 
     } else {
       User.getUserKYC(email, (err, user) => {
         if (err) throw err;
-        var retUser = {
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          birthDate: user.birthDate,
-          address: user.address,
-          walletAddress: user.walletAddress,
-          telephone: user.telephone,
-          passportImageAddress: user.passportImageAddress,
-          registeredDate: user.registeredDate
-        };
+        user["password"] = "***";
+
         Log("Method: GetKYCInfo, Info: Get user KYC info successfuly", req.user.email);
-        return res.json({ success: true, user: retUser });
+        return res.json({ success: true, user: user });
       });
     }
   });

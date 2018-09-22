@@ -150,7 +150,6 @@ module.exports.getUsersListKYC = function(callback) {
 
 module.exports.getUserKYC = function(email, callback) {
   const query = { email: email };
-  console.log(query);
 
   User.findOne(query, callback);
 };

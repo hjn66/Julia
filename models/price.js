@@ -20,8 +20,6 @@ module.exports.getPrice = function(from, to, type, callback) {
     query["date"]["$lte"] = to;
   }
 
-  // console.log(query);
-
   Price.find(query)
     .sort("date")
     .exec(callback);
@@ -30,8 +28,6 @@ module.exports.getPrice = function(from, to, type, callback) {
 module.exports.getLastPrice = function(type, callback) {
   var query = {};
   query["type"] = type;
-
-  // console.log(query);
 
   Price.findOne(query)
     .sort("-date")
