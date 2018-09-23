@@ -444,7 +444,7 @@ router.post("/disable", passport.authenticate("jwt", { session: false }), (req, 
         }
         user.enabled = false;
         var addr = config.RPCServer + "/api/rpc/remove-from-whitelist";
-        request.post(addr, { json: { user: user.walletAddress, referal: referWallet } }, function(error, response, body) {
+        request.post(addr, { json: { user: user.walletAddress } }, function(error, response, body) {
           if (!error && response.statusCode == 200) {
             if (body.success) {
               Log("Method: DisableUser, Info: Wallet(" + user.walletAddress + ") removed from whitelist, txID: " + body.msg, "SYSTEM");
@@ -486,7 +486,7 @@ router.post("/enable", passport.authenticate("jwt", { session: false }), (req, r
         }
         user.enabled = true;
         var addr = config.RPCServer + "/api/rpc/add-to-whitelist";
-        request.post(addr, { json: { user: user.walletAddress, referal: referWallet } }, function(error, response, body) {
+        request.post(addr, { json: { user: user.walletAddress } }, function(error, response, body) {
           if (!error && response.statusCode == 200) {
             if (body.success) {
               Log("Method: EnableUser, Info: Wallet(" + user.walletAddress + ") added to whitelist, txID: " + body.msg, "SYSTEM");
