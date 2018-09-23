@@ -508,6 +508,7 @@ router.post("/enable", passport.authenticate("jwt", { session: false }), (req, r
   });
 });
 
+// user, verifyKYC, changeRoles, answerTicket, userManager, RPCManager
 // Change Roles
 router.post("/changeroles", passport.authenticate("jwt", { session: false }), (req, res, next) => {
   const adminRoles = req.user.roles;
