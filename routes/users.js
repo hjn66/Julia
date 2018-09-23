@@ -127,11 +127,6 @@ router.post("/authenticate", (req, res, next) => {
   });
 });
 
-// Profile
-router.get("/profile", passport.authenticate("jwt", { session: false }), (req, res, next) => {
-  return res.json({ user: req.user });
-});
-
 // Verify Email
 router.get("/verifyemail", (req, res, next) => {
   const verificationToken = req.query.verificationToken;
@@ -297,13 +292,21 @@ router.post("/updatekyc", passport.authenticate("jwt", { session: false }), uplo
     }
     if (req.file) {
       user.passportImageAddress = req.file.filename;
+      console.log(req.file.originalname);
     }
     user.KYCUpdated = true;
     user.KYCVerified = false;
     user.save(function(err) {
-      //TODO: maybe dupliucate wallet
-
-      if (err) return res.json({ success: true, msg: err });
+      if (err) {
+        if (err.code == "11000") {
+          console.log(err.errmsg);
+          Log("Method: UpdateKYC, Error: " + err.errmsg, newUser.email);
+          return res.json({ success: false, msg: "Wallet address used by another user" });
+        } else {
+          Log("Method: UpdateKYC, Error: " + err, newUser.email);
+          return res.json({ success: false, msg: err });
+        }
+      }
       Log("Method: UpdateKYC, Info: User KYC Updated", user.email);
       return res.json({ success: true, msg: "User KYC Updated" });
     });
@@ -346,32 +349,11 @@ router.post("/verifykyc", passport.authenticate("jwt", { session: false }), (req
           user.KYCUpdated = false;
           user.KYCVerified = true;
           user.enabled = true;
-          var id = mongoose.Types.ObjectId;
-          var referWallet = "";
-          if (user.referal && id.isValid(user.referal)) {
-            id = mongoose.Types.ObjectId(user.referal);
-            User.getUserById(id, (err, referal) => {
-              if (err) throw err;
-              referWallet = referal.walletAddress;
-            });
-          }
-          var addr = config.RPCServer + "/api/rpc/add-to-whitelist";
-          request.post(addr, { json: { user: user.walletAddress, referal: referWallet } }, function(error, response, body) {
-            if (!error && response.statusCode == 200) {
-              if (body.success) {
-                Log("Method: VerifyKYC, Info: Wallet(" + user.walletAddress + ") added to whitelist, txID: " + body.msg, "SYSTEM");
-                user.save(function(err) {
-                  if (err) return res.json({ success: false, msg: "User can not save" });
-                  Log("Method: VerifyKYC, Info: User(" + user.email + ") KYC verified", req.user.email);
-                  return res.json({ success: true, msg: "User KYC verified" });
-                });
-              } else {
-                Log("Method: VerifyKYC, Error: " + body.msg + "while add wallet (" + user.walletAddress + ")", "SYSTEM");
-              }
-            } else {
-              Log("Method: VerifyKYC, Error: Can'n connect to RPC Server", "SYSTEM");
-              return res.json({ success: false, msg: "Error on connection to server" });
-            }
+
+          user.save(function(err) {
+            if (err) return res.json({ success: false, msg: "User can not save" });
+            Log("Method: VerifyKYC, Info: User(" + user.email + ") KYC verified", req.user.email);
+            return res.json({ success: true, msg: "User KYC verified" });
           });
         } else {
           var mailContent = "Hi " + user.firstName + "<br>";
@@ -461,6 +443,58 @@ router.post("/disable", passport.authenticate("jwt", { session: false }), (req, 
             return res.json({ success: false, msg: "Error on connection to server" });
           }
         });
+      });
+    }
+  });
+});
+
+// Sign Contract
+router.post("/sign-contract", passport.authenticate("jwt", { session: false }), (req, res, next) => {
+  const email = req.user.email;
+  const contractType = req.body.contractType;
+  User.getUserByEmail(email, (err, user) => {
+    if (err) {
+      Log("Method: SignContract, Error: " + err.message, "SYSTEM");
+      return res.json({ success: false, msg: "Error on get user" });
+    }
+    if (!user) {
+      Log("Method: SignContract, Error: User(" + email + ") Not Found", req.user.email);
+      return res.json({ success: false, msg: "User not found" });
+    }
+    if (!user.KYCVerified) {
+      Log("Method: SignContract, Error: KYC not verified yet", email);
+      return res.json({ success: false, msg: "KYC not verified, please update your KYC and wait to verify by admin" });
+    } else {
+      user.contractType = contractType;
+      user.SignedContract = true;
+
+      var id = mongoose.Types.ObjectId;
+      var referWallet = "";
+      if (user.referal && id.isValid(user.referal)) {
+        id = mongoose.Types.ObjectId(user.referal);
+        User.getUserById(id, (err, referal) => {
+          if (err) throw err;
+          referWallet = referal.walletAddress;
+        });
+      }
+
+      var addr = config.RPCServer + "/api/rpc/add-to-whitelist";
+      request.post(addr, { json: { user: user.walletAddress, referal: referWallet } }, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+          if (body.success) {
+            Log("Method: SignContract, Info: Wallet(" + user.walletAddress + ") added to whitelist, txID: " + body.msg, "SYSTEM");
+            user.save(function(err) {
+              if (err) return res.json({ success: false, msg: "User can not save" });
+              Log("Method: SignContract, Info: User(" + email + ") enabled successfuly", req.user.email);
+              return res.json({ success: true, msg: "User enabled successfuly" });
+            });
+          } else {
+            Log("Method: SignContract, Error: " + body.msg + "while add wallet (" + user.walletAddress + ") to whitelist", "SYSTEM");
+          }
+        } else {
+          Log("Method: SignContract, Error: Can'n connect to RPC Server", "SYSTEM");
+          return res.json({ success: false, msg: "Error on connection to server" });
+        }
       });
     }
   });

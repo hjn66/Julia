@@ -10,6 +10,7 @@ const UserSchema = mongoose.Schema({
   password: { type: String, required: true },
   KYCVerified: { type: Boolean, default: false },
   KYCUpdated: { type: Boolean, default: false },
+  SignedContract: { type: Boolean, default: false },
   enabled: { type: Boolean },
   firstName: { type: String },
   lastName: { type: String },
@@ -20,6 +21,7 @@ const UserSchema = mongoose.Schema({
   passportImageAddress: { type: String },
   registeredDate: { type: Date, default: Date.now() },
   referal: { type: String },
+  contractType: { type: String, enum: ["Risky", "Normal"] },
   roles: [{ roleTitle: String }]
 });
 
