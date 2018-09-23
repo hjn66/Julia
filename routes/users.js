@@ -103,21 +103,11 @@ router.post("/authenticate", (req, res, next) => {
           expiresIn: 604800 // 1 week in sec
         });
         Log("Method: Authenticate, Info: User authenticated successfuly", email);
+        user["password"] = "***";
         return res.json({
           success: true,
           token: "JWT " + token,
-          user: {
-            id: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            roles: user.roles,
-            walletAddress: user.walletAddress,
-            telephone: user.telephone,
-            address: user.address,
-            passportImageAddress: user.passportImageAddress,
-            KYCVerified: user.KYCVerified
-          }
+          user: user
         });
       } else {
         Log("Method: Authenticate, Error: Wrong Password", email);

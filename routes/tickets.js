@@ -33,6 +33,7 @@ router.post("/create", passport.authenticate("jwt", { session: false }), upload.
   });
   if (req.file) {
     newTicket.attachmentAddress = req.file.filename;
+    newTicket.attachmentName = req.file.originalname;
   }
   newTicket.save(function(err) {
     if (err) return res.json({ success: false, msg: "Error on save ticket" });

@@ -12,6 +12,7 @@ const TicketSchema = mongoose.Schema({
   tokenType: { type: String, enum: ["Risky", "Normal"] },
   description: { type: String, required: true },
   attachmentAddress: { type: String },
+  attachmentName: { type: String },
   createdate: { type: Date, default: Date.now() },
   lastReplayDate: { type: Date, default: Date.now() },
   recieveEmail: { type: Boolean, default: true },
