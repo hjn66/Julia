@@ -9,7 +9,7 @@ const PriceSchema = mongoose.Schema({
 
 const Price = (module.exports = mongoose.model("Price", PriceSchema));
 
-module.exports.getPrice = function(from, to, type, callback) {
+module.exports.getPrice = async function(from, to, type) {
   var query = {};
   query["type"] = type;
   query["date"] = { $gte: "1900-01-01" };
@@ -20,18 +20,18 @@ module.exports.getPrice = function(from, to, type, callback) {
     query["date"]["$lte"] = to;
   }
 
-  Price.find(query)
+  return await Price.find(query)
     .sort("date")
-    .exec(callback);
+    .exec();
 };
 
-module.exports.getLastPrice = function(type, callback) {
+module.exports.getLastPrice = async function(type) {
   var query = {};
   query["type"] = type;
 
-  Price.findOne(query)
+  return await Price.findOne(query)
     .sort("-date")
-    .exec(callback);
+    .exec();
 };
 
 module.exports.addDefaultPrice = function(dates, type) {

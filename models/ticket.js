@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const config = require("../config/setting");
 autoIncrement = require("mongoose-auto-increment");
-const Email = require("../config/email");
-const Log = require("../log");
+const Email = require("../middlewares/email");
+const Log = require("../middlewares/log");
 
 // Ticket Schema
 const TicketSchema = mongoose.Schema({
@@ -40,46 +40,37 @@ const Ticket = (module.exports = mongoose.model("Ticket", TicketSchema));
 //Close Answered Tickets Older than times in seconds
 closeOldAnsweredTickets();
 
-module.exports.addTicket = function(newTicket, callback) {
-  newTicket.save(callback);
+module.exports.addTicket = async function(newTicket) {
+  return await newTicket.save();
 };
 
 // Get ticket by ticketNumber
-module.exports.getTicketByNumber = function(ticketNumber, callback) {
+module.exports.getTicketByNumber = async function(ticketNumber) {
   const query = { ticketNumber: ticketNumber };
-  Ticket.findOne(query, callback);
+  ticke = await Ticket.findOne(query);
+  if (!ticket) {
+    throw new Error("Ticket not found");
+  }
 };
 
 // Checks Old Answered Ticket And Close Them
-function closeOldAnsweredTickets() {
+async function closeOldAnsweredTickets() {
   var date = new Date() - config.AutoClodeTickets;
   providedDate = new Date(date);
 
   const query = { lastReplayDate: { $lt: providedDate }, status: "Answered" };
 
-  Ticket.find(query, function(err, tickets) {
-    if (err) throw err;
-    tickets.forEach(ticket => {
-      if (ticket.recieveEmail) {
-        var mailContent = "Hi <br>";
-        mailContent += "Ticket number(" + ticket.ticketNumber + ") with subject " + ticket.subject;
-        mailContent += " closed authomatically because admin answered one weeks ago and you don't replay it.";
-        Email.sendMail(ticket.userEmail, "Your ticket closed by system", mailContent, (error, info) => {
-          if (error) {
-            Log("Method: CloseTicketAuthomaticaly, Error: " + err + " while Sending Email to " + ticket.userEmail, "SYSTEM");
-          } else {
-            Log("Method: CloseTicketAuthomaticaly, Info: Close Ticket Authomatically Email sent to " + ticket.userEmail, "SYSTEM");
-          }
-        });
-      }
-      ticket.status = "Closed";
-      ticket.save(function(err) {
-        if (err) {
-          Log("Method: CloseTicketAuthomaticaly, Error: " + err.message, "SYSTEM");
-        }
-        Log("Method: CloseTicketAuthomaticaly, Info: Ticket number(" + ticket.ticketNumber + ") Closed", "SYSTEM");
-      });
-    });
+  tickets = await Ticket.find(query);
+  tickets.forEach(async ticket => {
+    if (ticket.recieveEmail) {
+      var mailContent = "Hi <br>";
+      mailContent += "Ticket number(" + ticket.ticketNumber + ") with subject " + ticket.subject;
+      mailContent += " closed authomatically because admin answered one weeks ago and you don't replay it.";
+      Email.sendMail(ticket.userEmail, "Your ticket closed by system", mailContent);
+    }
+    ticket.status = "Closed";
+    await icket.save();
+    Log("Method: CloseTicketAuthomaticaly, Info: Ticket number(" + ticket.ticketNumber + ") Closed", "SYSTEM");
   });
   //Repeat Function every minute
   setTimeout(closeOldAnsweredTickets, 60000);
@@ -88,7 +79,7 @@ function closeOldAnsweredTickets() {
 // Get All Tickets
 // if reqUserEmail == null then return all userEmail else retuen user's ticket
 // if reqStatus == null return all status
-module.exports.getAllTicket = function(reqUserEmail, reqStatus, callback) {
+module.exports.getAllTicket = async function(reqUserEmail, reqStatus) {
   var query = {};
 
   if (reqUserEmail) {
@@ -98,6 +89,5 @@ module.exports.getAllTicket = function(reqUserEmail, reqStatus, callback) {
     query["status"] = reqStatus;
   }
 
-  // const query = { ticketNumber: ticketNumber }
-  Ticket.find(query, callback);
+  return await Ticket.find(query);
 };

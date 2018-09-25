@@ -21,22 +21,21 @@ const ForgottenPasswordTokenSchema = mongoose.Schema({
 
 const ForgottenPasswordToken = (module.exports = mongoose.model("ForgottenPasswordToken", ForgottenPasswordTokenSchema));
 
-module.exports.forgotPassword = function(forgotPasswordToken, callback) {
+module.exports.forgotPassword = async function(forgotPasswordToken) {
   var token = randToken.generate(16);
   forgotPasswordToken.token = token;
-  forgotPasswordToken.save(callback);
+  return await forgotPasswordToken.save();
 };
 
-module.exports.getTokenByToken = function(givenToken, callback) {
+module.exports.getTokenByToken = async function(givenToken) {
   const query = { token: givenToken.token };
-  ForgottenPasswordToken.findOne(query, callback);
+  return await ForgottenPasswordToken.findOne(query);
 };
 
-module.exports.getTokenByToken = function(givenToken, callback) {
+module.exports.getTokenByToken = async function(givenToken) {
   // delete expired token
-  ForgottenPasswordToken.deleteMany({ expiration: { $lt: Date.now() } }, function(err) {
-    if (err) return null;
-  });
+  await ForgottenPasswordToken.deleteMany({ expiration: { $lt: Date.now() } });
+
   const query = { token: givenToken };
-  ForgottenPasswordToken.findOne(query, callback);
+  return await ForgottenPasswordToken.findOne(query);
 };

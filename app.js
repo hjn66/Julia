@@ -6,8 +6,10 @@ const passport = require("passport");
 const mongoose = require("mongoose"),
   Schema = mongoose.Schema,
   autoIncrement = require("mongoose-auto-increment");
+require("express-async-errors");
 const config = require("./config/setting");
 const configAdmin = require("./config/admin");
+const errors = require("./middlewares/errors");
 
 mongoose.connect(
   config.database,
@@ -50,6 +52,7 @@ require("./config/passport")(passport);
 app.use("/users", users);
 app.use("/tickets", tickets);
 app.use("/rpc", rpc);
+app.use(errors);
 
 const User = require("./models/user");
 let administrator = new User({

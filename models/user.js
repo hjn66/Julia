@@ -39,9 +39,26 @@ module.exports.getUserById = function(id, callback) {
   User.findById(id, callback);
 };
 
-module.exports.getUserByEmail = function(email, callback) {
+module.exports.getUserByStrId = async function(strId) {
+  var id = mongoose.Types.ObjectId;
+  if (id.isValid(strId)) {
+    id = mongoose.Types.ObjectId(strId);
+    user = await User.findById(id);
+    if (user) {
+      return user;
+    }
+  }
+  throw new Error("UserId not found");
+};
+
+module.exports.getUserByEmail = async function(email) {
   const query = { email: email };
-  User.findOne(query, callback);
+  user = await User.findOne(query);
+
+  if (!user) {
+    throw new Error("Email not registered");
+  }
+  return user;
 };
 
 module.exports.addAdministrator = function(administrator, callback) {
@@ -69,89 +86,97 @@ module.exports.addAdministrator = function(administrator, callback) {
   });
 };
 
-module.exports.addUser = function(newUser, callback) {
-  bcrypt.genSalt(10, (err, salt) => {
-    bcrypt.hash(newUser.password, salt, (err, hash) => {
-      if (err) throw err;
-      newUser.password = hash;
-      var token = randToken.generate(16);
-      newUser.emailVerificationToken = token;
-      newUser.roles = [{ roleTitle: "user" }];
-      newUser.save(callback);
-    });
-  });
-};
-
-module.exports.comparePassword = function(candidatePassword, hash, callback) {
-  bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
-    if (err) throw err;
-    callback(null, isMatch);
-  });
-};
-
-module.exports.changePassword = function(user, newPassword, callback) {
-  bcrypt.genSalt(10, (err, salt) => {
-    bcrypt.hash(newPassword, salt, (err, hash) => {
-      if (err) throw err;
-      user.password = hash;
-      user.save(callback);
-    });
-  });
-};
-
-module.exports.checkReferal = function(referal, callback) {
-  if (referal) {
-    var id = mongoose.Types.ObjectId;
-    if (id.isValid(referal)) {
-      id = mongoose.Types.ObjectId(referal);
-      User.getUserById(id, (err, user) => {
-        if (err) throw err;
-        if (!user) {
-          callback("Referal not found", false);
-        } else {
-          if (!user.KYCVerified) {
-            callback("Referal KYC not verified yet", false);
-          } else {
-            callback(null, true);
-          }
-        }
-      });
+module.exports.addUser = async function(newUser) {
+  salt = await bcrypt.genSalt(10);
+  hash = await bcrypt.hash(newUser.password, salt);
+  newUser.password = hash;
+  var token = randToken.generate(16);
+  newUser.emailVerificationToken = token;
+  newUser.roles = [{ roleTitle: "user" }];
+  try {
+    return await newUser.save();
+  } catch (ex) {
+    if (ex.code == 11000) {
+      throw new Error(newUser.email + " registered before");
     } else {
-      callback("Referal not found", false);
+      throw ex;
     }
-  } else {
-    callback(null, true);
   }
 };
 
-module.exports.hasRole = function(roles, requestedRole, callback) {
+module.exports.comparePassword = async function(candidatePassword, hash) {
+  return await bcrypt.compare(candidatePassword, hash);
+};
+
+module.exports.changePassword = async function(user, newPassword) {
+  salt = await bcrypt.genSalt(10);
+  hash = await bcrypt.hash(newPassword, salt);
+  user.password = hash;
+  return await user.save();
+};
+
+module.exports.checkReferal = async function(referal) {
+  if (referal) {
+    try {
+      await User.getUserByStrId(referal);
+      return true;
+    } catch (ex) {
+      throw new Error("Invalid Referal");
+    }
+  } else {
+    return true;
+  }
+};
+
+module.exports.hasRole = async function(roles, requestedRole) {
   var isFound = false;
+  requestedRole.push("admin");
 
   roles.forEach(function(role, index, array) {
     if (requestedRole.includes(role.roleTitle)) {
       isFound = true;
     }
   });
-  callback(isFound);
+  return await isFound;
 };
 
-module.exports.getUserReferals = function(id, callback) {
+module.exports.getUserReferals = async function(id) {
   const query = { referal: id };
-  User.find(query, callback);
+  return await User.find(query, callback);
 };
 
-module.exports.getUsersList = function(callback) {
+module.exports.getUsersList = async function() {
   const query = {};
-  User.find(query, callback);
+  return await User.find(query);
 };
 
-module.exports.getUsersListKYC = function(callback) {
+module.exports.getUsersListRoles = async function() {
+  const query = {};
+  return await User.find(query, {
+    email: 1,
+    firstName: 1,
+    lastName: 1,
+    roles: 1
+  });
+};
+
+module.exports.getUsersListKYC = async function() {
   const query = { KYCUpdated: true, KYCVerified: false };
-  User.find(query, callback);
+  return await User.find(query, {
+    email: 1,
+    firstName: 1,
+    lastName: 1,
+    birthDate: 1,
+    address: 1,
+    walletAddress: 1,
+    telephone: 1,
+    passportImageAddress: 1,
+    registeredDate: 1
+  });
 };
 
-module.exports.getUserKYC = function(email, callback) {
+module.exports.getUserKYC = async function(email) {
   const query = { email: email };
 
-  User.findOne(query, callback);
+  return await User.findOne(query, { password: 0 });
 };
