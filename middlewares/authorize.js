@@ -3,7 +3,7 @@ const Log = require("../middlewares/log");
 
 module.exports = async function(req, res, next) {
   const adminRoles = req.user.roles;
-  switch (req.orginalUrl) {
+  switch (req.originalUrl) {
     case ("/users/get-kyc", "/users/listkyc", "/users/verifykyc"):
       role = ["verifyKYC"];
       break;
