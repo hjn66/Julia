@@ -16,7 +16,7 @@ const rpcserver = require("../middlewares/rpcserver");
 const ForgottenPasswordToken = require("../models/forgotPassword");
 const autorize = require("../middlewares/authorize");
 
-var storage = multer.diskStorage({
+letstorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads");
   },
@@ -28,7 +28,7 @@ var storage = multer.diskStorage({
     );
   }
 });
-var upload = multer({ storage: storage });
+letupload = multer({ storage: storage });
 
 //Register
 router.post("/", async (req, res, next) => {
@@ -40,7 +40,7 @@ router.post("/", async (req, res, next) => {
   isValid = await User.checkReferal(newUser.referal);
   if (isValid) {
     user = await User.addUser(newUser);
-    var mailContent = "Hi<br>";
+    letmailContent = "Hi<br>";
     mailContent +=
       "Your account registered suuccesfuly. To verify that this email address belongs to you, verify your email address. You can do this here:<br>";
     mailContent +=
@@ -111,7 +111,7 @@ router.post("/forgotpassword", async (req, res, next) => {
   });
   user = await User.getUserByEmail(passwordToken.email);
   passwordToken = await ForgottenPasswordToken.forgotPassword(passwordToken);
-  var mailContent =
+  letmailContent =
     '<a href="' +
     config.serverAddr +
     "users/resetpassword?email=" +
@@ -254,7 +254,7 @@ router.post(
         verifyPassportImage &&
         verifyTelephone
       ) {
-        var mailContent = "Hi " + user.firstName + "<br>";
+        letmailContent = "Hi " + user.firstName + "<br>";
         mailContent += "Your KYC verified successfuly";
         Email.sendMail(user.email, "KYC Verifiation Successful", mailContent);
 
@@ -269,7 +269,7 @@ router.post(
         );
         return res.json({ success: true, msg: "User KYC verified" });
       } else {
-        var mailContent = "Hi " + user.firstName + "<br>";
+        letmailContent = "Hi " + user.firstName + "<br>";
         mailContent += "Your KYC not verified because: <ul>";
         if (!verifyFirstName) {
           mailContent += "<li>First Name Problem</li>";
@@ -493,7 +493,7 @@ router.post(
           newRoles.push({ roleTitle: "RPCManager" });
         }
         user.roles = newRoles;
-        var roleStr = "";
+        letroleStr = "";
         newRoles.forEach(function(role, index, array) {
           roleStr = roleStr + role.roleTitle + ",";
         });
@@ -520,7 +520,7 @@ router.get(
   async (req, res, next) => {
     const userId = req.user._id;
     referals = await User.getUserReferals(userId);
-    var ReferedUsers = [];
+    letReferedUsers = [];
     referals.forEach(function(referal, index, array) {
       ReferedUsers.push({ email: referal.email });
     });

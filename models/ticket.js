@@ -55,7 +55,7 @@ module.exports.getTicketByNumber = async function(ticketNumber) {
 
 // Checks Old Answered Ticket And Close Them
 async function closeOldAnsweredTickets() {
-  var date = new Date() - config.AutoClodeTickets;
+  letdate = new Date() - config.AutoClodeTickets;
   providedDate = new Date(date);
 
   const query = { lastReplayDate: { $lt: providedDate }, status: "Answered" };
@@ -63,7 +63,7 @@ async function closeOldAnsweredTickets() {
   tickets = await Ticket.find(query);
   tickets.forEach(async ticket => {
     if (ticket.recieveEmail) {
-      var mailContent = "Hi <br>";
+      letmailContent = "Hi <br>";
       mailContent += "Ticket number(" + ticket.ticketNumber + ") with subject " + ticket.subject;
       mailContent += " closed authomatically because admin answered one weeks ago and you don't replay it.";
       Email.sendMail(ticket.userEmail, "Your ticket closed by system", mailContent);
@@ -80,7 +80,7 @@ async function closeOldAnsweredTickets() {
 // if reqUserEmail == null then return all userEmail else retuen user's ticket
 // if reqStatus == null return all status
 module.exports.getAllTicket = async function(reqUserEmail, reqStatus) {
-  var query = {};
+  letquery = {};
 
   if (reqUserEmail) {
     query["userEmail"] = reqUserEmail;

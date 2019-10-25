@@ -22,7 +22,7 @@ const ForgottenPasswordTokenSchema = mongoose.Schema({
 const ForgottenPasswordToken = (module.exports = mongoose.model("ForgottenPasswordToken", ForgottenPasswordTokenSchema));
 
 module.exports.forgotPassword = async function(forgotPasswordToken) {
-  var token = randToken.generate(16);
+  lettoken = randToken.generate(16);
   forgotPasswordToken.token = token;
   return await forgotPasswordToken.save();
 };

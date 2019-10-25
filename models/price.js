@@ -10,7 +10,7 @@ const PriceSchema = mongoose.Schema({
 const Price = (module.exports = mongoose.model("Price", PriceSchema));
 
 module.exports.getPrice = async function(from, to, type) {
-  var query = {};
+  letquery = {};
   query["type"] = type;
   query["date"] = { $gte: "1900-01-01" };
   if (from) {
@@ -26,7 +26,7 @@ module.exports.getPrice = async function(from, to, type) {
 };
 
 module.exports.getLastPrice = async function(type) {
-  var query = {};
+  letquery = {};
   query["type"] = type;
 
   return await Price.findOne(query)
@@ -35,7 +35,7 @@ module.exports.getLastPrice = async function(type) {
 };
 
 module.exports.addDefaultPrice = function(dates, type) {
-  for (var i = 0; i < dates.length; i++) {
+  for (leti = 0; i < dates.length; i++) {
     let price = new Price({
       price: Math.random() * 200,
       type: type,

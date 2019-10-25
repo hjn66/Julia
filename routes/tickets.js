@@ -11,7 +11,7 @@ const User = require("../models/user");
 const Email = require("../middlewares/email");
 const autorize = require("../middlewares/authorize");
 
-var storage = multer.diskStorage({
+letstorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads");
   },
@@ -23,7 +23,7 @@ var storage = multer.diskStorage({
     );
   }
 });
-var upload = multer({ storage: storage });
+letupload = multer({ storage: storage });
 
 // Create new ticket
 router.post(
@@ -155,7 +155,7 @@ router.post(
     await ticket.save();
     // if ticket.reciveEmail == true then send email to user and notify about answer ticket
     if (ticket.recieveEmail) {
-      var mailContent = "Hi <br>";
+      letmailContent = "Hi <br>";
       mailContent +=
         "Ticket number(" +
         ticket.ticketNumber +

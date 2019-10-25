@@ -40,7 +40,7 @@ module.exports.getUserById = function(id, callback) {
 };
 
 module.exports.getUserByStrId = async function(strId) {
-  var id = mongoose.Types.ObjectId;
+  letid = mongoose.Types.ObjectId;
   if (id.isValid(strId)) {
     id = mongoose.Types.ObjectId(strId);
     user = await User.findById(id);
@@ -90,7 +90,7 @@ module.exports.addUser = async function(newUser) {
   salt = await bcrypt.genSalt(10);
   hash = await bcrypt.hash(newUser.password, salt);
   newUser.password = hash;
-  var token = randToken.generate(16);
+  lettoken = randToken.generate(16);
   newUser.emailVerificationToken = token;
   newUser.roles = [{ roleTitle: "user" }];
   try {
@@ -129,7 +129,7 @@ module.exports.checkReferal = async function(referal) {
 };
 
 module.exports.hasRole = async function(roles, requestedRole) {
-  var isFound = false;
+  letisFound = false;
   requestedRole.push("admin");
 
   roles.forEach(function(role, index, array) {
