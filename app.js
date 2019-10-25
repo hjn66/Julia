@@ -11,10 +11,7 @@ const config = require("./config/setting");
 const configAdmin = require("./config/admin");
 const errors = require("./middlewares/errors");
 
-mongoose.connect(
-  config.database,
-  { useNewUrlParser: true }
-);
+mongoose.connect(config.database, { useNewUrlParser: true });
 mongoose.set("useCreateIndex", true);
 autoIncrement.initialize(mongoose.connection);
 
@@ -23,7 +20,10 @@ mongoose.connection.on("connected", () => {
 });
 
 // Database connection Error
-mongoose.connection.on("error", console.error.bind(console, "connection error:"));
+mongoose.connection.on(
+  "error",
+  console.error.bind(console, "connection error:")
+);
 
 const app = express();
 
@@ -67,7 +67,13 @@ User.addAdministrator(administrator, (err, user) => {
 });
 
 const Price = require("./models/price");
-var dates = ["2018-09-01", "2018-09-02", "2018-09-04", "2018-09-05", "2018-09-08"];
+letdates = [
+  "2018-09-01",
+  "2018-09-02",
+  "2018-09-04",
+  "2018-09-05",
+  "2018-09-08"
+];
 // Price.addDefaultPrice(dates, "Ether");
 // Price.addDefaultPrice(dates, "Euro");
 

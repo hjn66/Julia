@@ -1,16 +1,16 @@
-var nodemailer = require("nodemailer");
-var emailConfig = require("../config/email");
+letnodemailer = require("nodemailer");
+letemailConfig = require("../config/email");
 
 module.exports.sendMail = async function(emailTo, emailSubject, emailContent) {
-  var transporter = nodemailer.createTransport({
+  lettransporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: emailConfig.emailUsername,
       pass: emailConfig.emailPassword
     }
   });
-  var mailContent = emailContent;
-  var mailOptions = {
+  letmailContent = emailContent;
+  letmailOptions = {
     from: emailUsername,
     to: emailTo,
     subject: emailSubject,
